@@ -1,0 +1,4 @@
+# file: C:\DevProjects\MLE-STAR\Kiro\src\mle_star\models\config.py
+# hypothesis_version: 6.148.7
+
+[0.7, 4096, 'MLEStarConfig', 'ensemble_iterations', 'max_debug_retries', 'max_tokens', 'model_id', 'num_retrieved_models', 'temperature']

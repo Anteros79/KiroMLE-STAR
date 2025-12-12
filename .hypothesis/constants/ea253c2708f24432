@@ -1,0 +1,4 @@
+# file: C:\DevProjects\MLE-STAR\Kiro\src\mle_star\tools\web_search.py
+# hypothesis_version: 6.148.7
+
+['-', ':', 'Accept', 'GOOGLE_API_KEY', 'application/json', 'cx', 'description', 'items', 'key', 'link', 'num', 'q', 'snippet', 'title', 'url', 'utf-8']

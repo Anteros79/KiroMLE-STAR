@@ -1,0 +1,4 @@
+# file: C:\DevProjects\MLE-STAR\Kiro\src\mle_star\models\data_models.py
+# hypothesis_version: 6.148.7
+
+['TaskDescription', '\\b(accuracy)\\b', '\\b(bleu)\\b', '\\b(classification)\\b', '\\b(clustering)\\b', '\\b(generation)\\b', '\\b(multimodal)\\b', '\\b(precision)\\b', '\\b(ranking)\\b', '\\b(recall)\\b', '\\b(recommendation)\\b', '\\b(regression)\\b', '\\b(rouge)\\b', '\\b(segmentation)\\b', '\\b(video)\\b', 'accuracy', 'auc_roc', 'audio', 'bleu', 'classification', 'clustering', 'f1_score', 'generation', 'image', 'log_loss', 'mae', 'map', 'mse', 'multimodal', 'object_detection', 'precision', 'r2', 'ranking', 'recall', 'recommendation', 'regression', 'rmse', 'rouge', 'segmentation', 'seq2seq', 'tabular', 'text', 'time_series', 'unknown', 'video']

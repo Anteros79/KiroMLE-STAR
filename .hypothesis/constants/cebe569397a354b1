@@ -1,0 +1,4 @@
+# file: C:\DevProjects\MLE-STAR\Kiro\src\mle_star\agents\retriever.py
+# hypothesis_version: 6.148.7
+
+[100, 500, '(?=\\n#{1,3}\\s+)', '(?=\\nModel\\s*\\d*:)', '(?=\\n\\*\\*[^*]+\\*\\*)', '(?=\\n\\d+\\.\\s+)', 'Unknown Model', '\\s+', '^[\\d\\.\\*#\\-]+\\s*', '```', 'retriever']

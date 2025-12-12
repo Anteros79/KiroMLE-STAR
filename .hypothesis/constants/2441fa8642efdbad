@@ -1,0 +1,4 @@
+# file: C:\DevProjects\MLE-STAR\Kiro\src\mle_star\agents\summarizer.py
+# hypothesis_version: 6.148.7
+
+[0.0, 100, '^[-*]\\s*', 'summarizer']

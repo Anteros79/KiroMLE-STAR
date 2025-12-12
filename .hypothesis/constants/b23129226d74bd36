@@ -1,0 +1,4 @@
+# file: C:\DevProjects\MLE-STAR\Kiro\src\mle_star\agents\planner.py
+# hypothesis_version: 6.148.7
+
+[0.6, 1000, 'Steps:', 'Unnamed Strategy', '\\d+\\.\\s+([^\\n]+)', '^\\d+\\.\\s*', 'planner']

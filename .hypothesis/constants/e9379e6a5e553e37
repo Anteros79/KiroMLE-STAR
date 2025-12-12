@@ -1,0 +1,4 @@
+# file: C:\DevProjects\MLE-STAR\Kiro\src\mle_star\agents\submission.py
+# hypothesis_version: 6.148.7
+
+[600, ',\\s*nrows\\s*=\\s*\\d+', 'Debug mode enabled', 'Fractional sampling', 'SAMPLE_SIZE constant', 'SUBSAMPLE = False', 'SUBSAMPLE flag', 'SUBSAMPLE\\s*=\\s*True', '\\.head\\(\\s*\\d+\\s*\\)', '\\.iloc\\[\\s*:\\s*(\\d+)', '\\[:(\\d+)\\]', '```\n', '```python', 'debug = False', 'debug\\s*=\\s*True', 'frac\\s*=\\s*0\\.\\d+', 'nrows\\s*=\\s*\\d+', 'submission.csv', 'submission_generator']

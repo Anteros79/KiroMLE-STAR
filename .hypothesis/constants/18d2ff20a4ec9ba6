@@ -1,0 +1,4 @@
+# file: C:\DevProjects\MLE-STAR\Kiro\src\mle_star\agents\ensemble_planner.py
+# hypothesis_version: 6.148.7
+
+[0.6, 500, 1000, '...', 'Custom Ensemble', 'Unnamed Strategy', '\\d+\\.\\s+([^\\n]+)', '^\\d+\\.\\s*', 'ensemble_planner']

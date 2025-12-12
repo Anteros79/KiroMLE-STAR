@@ -1,0 +1,4 @@
+# file: C:\Users\anter\AppData\Roaming\Python\Python313\site-packages\httpx\_api.py
+# hypothesis_version: 6.148.7
+
+['DELETE', 'GET', 'HEAD', 'OPTIONS', 'PATCH', 'POST', 'PUT', 'delete', 'get', 'head', 'options', 'patch', 'post', 'put', 'request', 'stream']

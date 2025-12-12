@@ -1,0 +1,4 @@
+# file: C:\DevProjects\MLE-STAR\Kiro\src\mle_star\agents\extractor.py
+# hypothesis_version: 6.148.7
+
+[0.0, 0.8, 150, '""".*?"""', '#.*$', "'''.*?'''", '...', 'Name[:\\s]+([^\\n]+)', 'extractor']

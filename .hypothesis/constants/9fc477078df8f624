@@ -1,0 +1,4 @@
+# file: C:\Users\anter\AppData\Roaming\Python\Python313\site-packages\strands\hooks\registry.py
+# hypothesis_version: 6.148.7
+
+['Agent', 'HookRegistry', 'TEvent', 'TInvokeEvent', '_disallow_writes']

@@ -1,7 +1,7 @@
 """Configuration dataclass for MLE-STAR agent."""
 
 from dataclasses import dataclass, field, asdict
-from typing import Any
+from typing import Any, Literal
 
 
 @dataclass
@@ -15,6 +15,8 @@ class MLEStarConfig:
         ensemble_iterations: Number of ensemble strategy exploration rounds (default: 5)
         max_debug_retries: Maximum number of debugging attempts before giving up (default: 3)
         model_id: The LLM model identifier to use for agents
+        model_provider: The model provider (ollama, bedrock, openai)
+        ollama_base_url: Base URL for Ollama API (default: http://localhost:11434)
         temperature: Temperature parameter for LLM generation
         max_tokens: Maximum tokens for LLM responses
     """
@@ -27,7 +29,9 @@ class MLEStarConfig:
     max_debug_retries: int = 3
     
     # LLM parameters
-    model_id: str = "anthropic.claude-sonnet-4-20250514-v1:0"
+    model_id: str = "gemma3:27b"
+    model_provider: Literal["ollama", "bedrock", "openai"] = "ollama"
+    ollama_base_url: str = "http://localhost:11434"
     temperature: float = 0.7
     max_tokens: int = 4096
     
@@ -55,7 +59,9 @@ class MLEStarConfig:
             outer_loop_iterations=data.get("outer_loop_iterations", 4),
             ensemble_iterations=data.get("ensemble_iterations", 5),
             max_debug_retries=data.get("max_debug_retries", 3),
-            model_id=data.get("model_id", "anthropic.claude-sonnet-4-20250514-v1:0"),
+            model_id=data.get("model_id", "gemma3:27b"),
+            model_provider=data.get("model_provider", "ollama"),
+            ollama_base_url=data.get("ollama_base_url", "http://localhost:11434"),
             temperature=data.get("temperature", 0.7),
             max_tokens=data.get("max_tokens", 4096),
         )

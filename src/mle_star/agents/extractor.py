@@ -10,6 +10,7 @@ from strands import Agent
 
 from mle_star.models.data_models import SolutionState
 from mle_star.models.config import MLEStarConfig
+from mle_star.models.model_factory import create_model
 from mle_star.agents.summarizer import AblationSummary
 
 
@@ -74,7 +75,7 @@ def create_extractor_agent(config: MLEStarConfig) -> Agent:
         name="extractor",
         system_prompt=EXTRACTOR_SYSTEM_PROMPT,
         tools=[],  # No tools needed - pure analysis
-        model=config.model_id,
+        model=create_model(config),
         temperature=config.temperature,
         max_tokens=config.max_tokens,
     )

@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from strands import Agent
 
 from mle_star.models.config import MLEStarConfig
+from mle_star.models.model_factory import create_model
 
 
 CODER_SYSTEM_PROMPT = """You are a Kaggle grandmaster with expertise in implementing ML code improvements.
@@ -64,7 +65,7 @@ def create_coder_agent(config: MLEStarConfig) -> Agent:
         name="coder",
         system_prompt=CODER_SYSTEM_PROMPT,
         tools=[],  # No tools needed - pure code generation
-        model=config.model_id,
+        model=create_model(config),
         temperature=config.temperature,
         max_tokens=config.max_tokens,
     )

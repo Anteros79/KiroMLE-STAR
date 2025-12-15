@@ -7,214 +7,51 @@ import { PipelineVisualization, StatusIndicator } from '@/components/pipeline';
 import { ExecutionControls, ProgressIndicator, LogViewer } from '@/components/execution';
 import { CodeViewer, ScoreDisplay, RefinementHistory, AblationResults } from '@/components/results';
 import { SubmissionPreview, EnsembleResults } from '@/components/submission';
-import {
-  MLEStarConfig,
-  TaskDescription,
-  PipelineState,
-  AgentNode,
-  LogEntry,
-  RefinementAttempt,
-  EnsembleResult,
-  DEFAULT_CONFIG,
-  PhaseStatus,
-} from '@/types';
-
-// Initial state
-const initialPipelineState: PipelineState = {
-  phase1: { status: 'pending', progress: 0 },
-  phase2: { status: 'pending', progress: 0 },
-  phase3: { status: 'pending', progress: 0 },
-  currentPhase: null,
-  isRunning: false,
-  isPaused: false,
-};
-
-const initialAgents: AgentNode[] = [
-  { id: 'retriever', name: 'Retriever', status: 'idle', phase: 1 },
-  { id: 'evaluator', name: 'Evaluator', status: 'idle', phase: 1 },
-  { id: 'merger', name: 'Merger', status: 'idle', phase: 1 },
-  { id: 'leakage_checker', name: 'Leakage Checker', status: 'idle', phase: 1 },
-  { id: 'usage_checker', name: 'Usage Checker', status: 'idle', phase: 1 },
-  { id: 'ablation', name: 'Ablation Study', status: 'idle', phase: 2 },
-  { id: 'summarizer', name: 'Summarizer', status: 'idle', phase: 2 },
-  { id: 'extractor', name: 'Extractor', status: 'idle', phase: 2 },
-  { id: 'coder', name: 'Coder', status: 'idle', phase: 2 },
-  { id: 'planner', name: 'Planner', status: 'idle', phase: 2 },
-  { id: 'ensemble_planner', name: 'Ensemble Planner', status: 'idle', phase: 3 },
-  { id: 'ensembler', name: 'Ensembler', status: 'idle', phase: 3 },
-  { id: 'submission', name: 'Submission', status: 'idle', phase: 3 },
-];
+import { usePipeline } from '@/hooks';
+import { TaskDescription, PhaseStatus } from '@/types';
+import { Sparkles, Zap, FileText, Trophy, Cpu, Wifi, WifiOff } from 'lucide-react';
 
 export default function Home() {
-  // State
   const [activeSection, setActiveSection] = useState('task');
-  const [config, setConfig] = useState<MLEStarConfig>(DEFAULT_CONFIG);
-  const [task, setTask] = useState<TaskDescription | null>(null);
-  const [pipelineState, setPipelineState] = useState<PipelineState>(initialPipelineState);
-  const [agents, setAgents] = useState<AgentNode[]>(initialAgents);
-  const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [runId, setRunId] = useState<string | null>(null);
   
-  // Results state
-  const [currentCode, setCurrentCode] = useState<string>('');
-  const [validationScore, setValidationScore] = useState<number>(0);
-  const [refinementAttempts, setRefinementAttempts] = useState<RefinementAttempt[]>([]);
-  const [ensembleResults, setEnsembleResults] = useState<EnsembleResult[]>([]);
-  const [ablationSummaries, setAblationSummaries] = useState<string[]>([]);
-  const [submissionData, setSubmissionData] = useState<string[][] | null>(null);
+  // Use the pipeline hook for all state management
+  const {
+    config,
+    task,
+    pipelineState,
+    agents,
+    logs,
+    currentCode,
+    validationScore,
+    refinementAttempts,
+    ensembleResults,
+    ablationSummaries,
+    submissionData,
+    isConnected,
+    isBackendAvailable,
+    setConfig,
+    setTask,
+    handleStart,
+    handlePause,
+    handleResume,
+    handleStop,
+    handleReset,
+    handleDownloadSubmission,
+    addLog,
+    clearLogs,
+  } = usePipeline();
 
   // Handlers
   const handleTaskSubmit = useCallback((newTask: TaskDescription) => {
     setTask(newTask);
     addLog('info', 'System', `Task configured: ${newTask.task_type} on ${newTask.data_modality} data`);
-  }, []);
+  }, [setTask, addLog]);
 
   const handleFileUpload = useCallback((files: File[]) => {
     files.forEach(file => {
       addLog('info', 'System', `File uploaded: ${file.name}`);
     });
-  }, []);
-
-  const addLog = useCallback((level: LogEntry['level'], agent: string, message: string) => {
-    setLogs(prev => [...prev, {
-      timestamp: new Date(),
-      level,
-      agent,
-      message,
-    }]);
-  }, []);
-
-  const handleStart = useCallback(async () => {
-    if (!task) {
-      addLog('error', 'System', 'Please configure a task before starting');
-      return;
-    }
-
-    setPipelineState(prev => ({
-      ...prev,
-      isRunning: true,
-      currentPhase: 1,
-      phase1: { ...prev.phase1, status: 'running', startTime: new Date() },
-    }));
-
-    addLog('info', 'System', 'Pipeline started');
-    addLog('info', 'Retriever', 'Searching for relevant models...');
-
-    // Simulate pipeline execution for demo
-    simulatePipeline();
-  }, [task]);
-
-  const simulatePipeline = useCallback(() => {
-    // This is a simulation for the frontend demo
-    // In production, this would poll the backend API
-    let progress = 0;
-    const interval = setInterval(() => {
-      progress += 5;
-      
-      if (progress <= 100) {
-        setPipelineState(prev => ({
-          ...prev,
-          phase1: { ...prev.phase1, progress, message: 'Processing...' },
-        }));
-      }
-      
-      if (progress === 30) {
-        setAgents(prev => prev.map(a => 
-          a.id === 'retriever' ? { ...a, status: 'completed' } :
-          a.id === 'evaluator' ? { ...a, status: 'running' } : a
-        ));
-        addLog('success', 'Retriever', 'Found 4 model candidates');
-        addLog('info', 'Evaluator', 'Evaluating candidates...');
-      }
-      
-      if (progress === 60) {
-        setAgents(prev => prev.map(a => 
-          a.id === 'evaluator' ? { ...a, status: 'completed' } :
-          a.id === 'merger' ? { ...a, status: 'running' } : a
-        ));
-        addLog('success', 'Evaluator', 'Evaluation complete. Best score: 0.8234');
-        addLog('info', 'Merger', 'Merging solutions...');
-      }
-      
-      if (progress >= 100) {
-        clearInterval(interval);
-        setPipelineState(prev => ({
-          ...prev,
-          phase1: { ...prev.phase1, status: 'completed', progress: 100, endTime: new Date() },
-          phase2: { ...prev.phase2, status: 'running', startTime: new Date() },
-          currentPhase: 2,
-        }));
-        setAgents(prev => prev.map(a => 
-          a.phase === 1 ? { ...a, status: 'completed' } :
-          a.id === 'ablation' ? { ...a, status: 'running' } : a
-        ));
-        addLog('success', 'System', 'Phase 1 complete');
-        addLog('info', 'Ablation Study', 'Starting ablation analysis...');
-        
-        // Set some demo results
-        setCurrentCode(`# MLE-STAR Generated Solution
-import pandas as pd
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
-from sklearn.model_selection import train_test_split
-
-# Load data
-train = pd.read_csv('train.csv')
-test = pd.read_csv('test.csv')
-
-# Feature engineering
-X = train.drop('target', axis=1)
-y = train['target']
-
-# Train models
-rf = RandomForestClassifier(n_estimators=100)
-gb = GradientBoostingClassifier(n_estimators=100)
-
-rf.fit(X, y)
-gb.fit(X, y)
-
-# Ensemble predictions
-predictions = (rf.predict_proba(test)[:, 1] + gb.predict_proba(test)[:, 1]) / 2
-`);
-        setValidationScore(0.8456);
-      }
-    }, 500);
-  }, []);
-
-  const handlePause = useCallback(() => {
-    setPipelineState(prev => ({ ...prev, isPaused: true }));
-    addLog('warning', 'System', 'Pipeline paused');
-  }, []);
-
-  const handleResume = useCallback(() => {
-    setPipelineState(prev => ({ ...prev, isPaused: false }));
-    addLog('info', 'System', 'Pipeline resumed');
-  }, []);
-
-  const handleStop = useCallback(() => {
-    setPipelineState(prev => ({
-      ...prev,
-      isRunning: false,
-      isPaused: false,
-    }));
-    addLog('warning', 'System', 'Pipeline stopped');
-  }, []);
-
-  const handleReset = useCallback(() => {
-    setPipelineState(initialPipelineState);
-    setAgents(initialAgents);
-    setLogs([]);
-    setCurrentCode('');
-    setValidationScore(0);
-    setRefinementAttempts([]);
-    setEnsembleResults([]);
-    setAblationSummaries([]);
-    setSubmissionData(null);
-  }, []);
-
-  const handleDownloadSubmission = useCallback(() => {
-    // In production, this would call the API
-    addLog('info', 'System', 'Downloading submission file...');
-  }, []);
+  }, [addLog]);
 
   const phaseStatuses: { [key: number]: PhaseStatus } = {
     1: pipelineState.phase1.status,
@@ -228,18 +65,63 @@ predictions = (rf.predict_proba(test)[:, 1] + gb.predict_proba(test)[:, 1]) / 2
       case 'task':
         return (
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900">Task Configuration</h2>
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-lg shadow-indigo-500/20">
+                  <FileText className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-900">Task Configuration</h2>
+                  <p className="text-sm text-slate-500">Define your ML task and upload data</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${
+                  isBackendAvailable 
+                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/60' 
+                    : 'bg-amber-50 text-amber-700 border border-amber-200/60'
+                }`}>
+                  <Cpu className="w-3.5 h-3.5" />
+                  {isBackendAvailable ? 'Backend Connected' : 'Demo Mode'}
+                </div>
+                {isConnected && (
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200/60">
+                    <Wifi className="w-3.5 h-3.5" />
+                    Live Updates
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Content Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="space-y-6">
-                <div className="bg-white rounded-lg border border-gray-200 p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Task Description</h3>
+                <div className="bg-gradient-to-br from-slate-50 to-slate-100/50 rounded-2xl border border-slate-200/60 p-6 shadow-sm">
+                  <div className="flex items-center gap-3 mb-5">
+                    <div className="p-2 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-lg shadow-indigo-500/20">
+                      <Sparkles className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-slate-900">Task Description</h3>
+                      <p className="text-xs text-slate-500">Define your ML problem</p>
+                    </div>
+                  </div>
                   <TaskInputForm
                     onSubmit={handleTaskSubmit}
                     disabled={pipelineState.isRunning}
                   />
                 </div>
-                <div className="bg-white rounded-lg border border-gray-200 p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Dataset Upload</h3>
+                <div className="bg-gradient-to-br from-slate-50 to-slate-100/50 rounded-2xl border border-slate-200/60 p-6 shadow-sm">
+                  <div className="flex items-center gap-3 mb-5">
+                    <div className="p-2 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl shadow-lg shadow-emerald-500/20">
+                      <Zap className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-slate-900">Dataset Upload</h3>
+                      <p className="text-xs text-slate-500">Upload your training data</p>
+                    </div>
+                  </div>
                   <DatasetUpload
                     onUpload={handleFileUpload}
                     disabled={pipelineState.isRunning}
@@ -262,6 +144,31 @@ predictions = (rf.predict_proba(test)[:, 1] + gb.predict_proba(test)[:, 1]) / 2
       case 'phase3':
         return (
           <div className="space-y-6">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-lg shadow-indigo-500/20">
+                  <Zap className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-900">Pipeline Execution</h2>
+                  <p className="text-sm text-slate-500">Monitor agent progress in real-time</p>
+                </div>
+              </div>
+              {isConnected ? (
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200/60">
+                  <div className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse" />
+                  Live Updates Active
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium bg-slate-50 text-slate-600 border border-slate-200/60">
+                  <WifiOff className="w-3.5 h-3.5" />
+                  Offline
+                </div>
+              )}
+            </div>
+
+            {/* Pipeline Visualization */}
             <PipelineVisualization
               phase1Status={pipelineState.phase1.status}
               phase2Status={pipelineState.phase2.status}
@@ -269,6 +176,8 @@ predictions = (rf.predict_proba(test)[:, 1] + gb.predict_proba(test)[:, 1]) / 2
               currentPhase={pipelineState.currentPhase}
               agents={agents}
             />
+
+            {/* Progress & Status */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <ProgressIndicator
                 phase1={pipelineState.phase1}
@@ -277,6 +186,8 @@ predictions = (rf.predict_proba(test)[:, 1] + gb.predict_proba(test)[:, 1]) / 2
               />
               <StatusIndicator pipelineState={pipelineState} />
             </div>
+
+            {/* Controls */}
             <ExecutionControls
               isRunning={pipelineState.isRunning}
               isPaused={pipelineState.isPaused}
@@ -287,14 +198,27 @@ predictions = (rf.predict_proba(test)[:, 1] + gb.predict_proba(test)[:, 1]) / 2
               onStop={handleStop}
               onReset={handleReset}
             />
-            <LogViewer logs={logs} onClear={() => setLogs([])} />
+
+            {/* Logs */}
+            <LogViewer logs={logs} onClear={clearLogs} />
           </div>
         );
 
       case 'results':
         return (
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900">Results</h2>
+            {/* Header */}
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl shadow-lg shadow-emerald-500/20">
+                <Trophy className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-slate-900">Results</h2>
+                <p className="text-sm text-slate-500">View scores, ablation studies, and refinements</p>
+              </div>
+            </div>
+
+            {/* Score & Ablation */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <ScoreDisplay
                 currentScore={validationScore}
@@ -304,6 +228,8 @@ predictions = (rf.predict_proba(test)[:, 1] + gb.predict_proba(test)[:, 1]) / 2
                 <AblationResults summaries={ablationSummaries} />
               </div>
             </div>
+
+            {/* Code Viewer */}
             {currentCode && (
               <CodeViewer
                 code={currentCode}
@@ -311,6 +237,8 @@ predictions = (rf.predict_proba(test)[:, 1] + gb.predict_proba(test)[:, 1]) / 2
                 language="python"
               />
             )}
+
+            {/* Refinement History */}
             <RefinementHistory attempts={refinementAttempts} />
           </div>
         );
@@ -318,8 +246,21 @@ predictions = (rf.predict_proba(test)[:, 1] + gb.predict_proba(test)[:, 1]) / 2
       case 'submission':
         return (
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900">Submission</h2>
+            {/* Header */}
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl shadow-lg shadow-amber-500/20">
+                <Trophy className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-slate-900">Submission</h2>
+                <p className="text-sm text-slate-500">Review ensemble results and download submission</p>
+              </div>
+            </div>
+
+            {/* Ensemble Results */}
             <EnsembleResults results={ensembleResults} />
+
+            {/* Submission Preview */}
             {submissionData ? (
               <SubmissionPreview
                 data={submissionData}
@@ -328,10 +269,12 @@ predictions = (rf.predict_proba(test)[:, 1] + gb.predict_proba(test)[:, 1]) / 2
                 onDownload={handleDownloadSubmission}
               />
             ) : (
-              <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
-                <p className="text-gray-500">
-                  No submission generated yet. Complete the pipeline to generate a submission file.
-                </p>
+              <div className="bg-gradient-to-br from-slate-50 to-slate-100/50 rounded-2xl border border-slate-200/60 p-12 text-center shadow-sm">
+                <div className="w-16 h-16 mx-auto mb-4 bg-slate-100 rounded-2xl flex items-center justify-center">
+                  <Trophy className="w-8 h-8 text-slate-400" />
+                </div>
+                <p className="text-slate-600 font-medium">No submission generated yet</p>
+                <p className="text-sm text-slate-400 mt-1">Complete the pipeline to generate a submission file</p>
               </div>
             )}
           </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { TrendingUp, TrendingDown, Minus, Target, Award } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, Target, Award, Sparkles } from 'lucide-react';
 
 interface ScoreDisplayProps {
   currentScore: number;
@@ -23,63 +23,107 @@ export default function ScoreDisplay({
     ? ((currentScore - previousScore) / previousScore) * 100
     : 0;
 
-  const getTrendIcon = () => {
-    if (improvement > 0.001) return <TrendingUp className="w-5 h-5 text-green-500" />;
-    if (improvement < -0.001) return <TrendingDown className="w-5 h-5 text-red-500" />;
-    return <Minus className="w-5 h-5 text-gray-400" />;
+  const getTrendConfig = () => {
+    if (improvement > 0.001) return {
+      icon: TrendingUp,
+      color: 'text-emerald-600',
+      bg: 'bg-emerald-50',
+      border: 'border-emerald-200/60',
+    };
+    if (improvement < -0.001) return {
+      icon: TrendingDown,
+      color: 'text-rose-600',
+      bg: 'bg-rose-50',
+      border: 'border-rose-200/60',
+    };
+    return {
+      icon: Minus,
+      color: 'text-slate-500',
+      bg: 'bg-slate-50',
+      border: 'border-slate-200/60',
+    };
   };
 
-  const getTrendColor = () => {
-    if (improvement > 0.001) return 'text-green-600';
-    if (improvement < -0.001) return 'text-red-600';
-    return 'text-gray-500';
-  };
-
+  const trend = getTrendConfig();
+  const TrendIcon = trend.icon;
   const isBestScore = bestScore !== undefined && Math.abs(currentScore - bestScore) < 0.0001;
 
+  // Calculate score percentage for visual indicator (assuming 0-1 range)
+  const scorePercent = Math.min(Math.max(currentScore * 100, 0), 100);
+
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <Target className="w-5 h-5 text-primary-600" />
-          <h3 className="font-semibold text-gray-900">Validation Score</h3>
+    <div className="bg-gradient-to-br from-slate-50 to-slate-100/50 rounded-2xl border border-slate-200/60 p-6 shadow-sm">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-lg shadow-indigo-500/20">
+            <Target className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-slate-900">Validation Score</h3>
+            <p className="text-xs text-slate-500">{metric.toUpperCase()} metric</p>
+          </div>
         </div>
         {isBestScore && (
-          <div className="flex items-center gap-1 px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">
-            <Award className="w-3 h-3" />
-            Best
+          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-amber-100 to-yellow-100 text-amber-700 rounded-full text-xs font-semibold border border-amber-200/60">
+            <Award className="w-3.5 h-3.5" />
+            Best Score
           </div>
         )}
       </div>
 
-      <div className="flex items-end gap-4">
-        <div>
-          <p className="text-4xl font-bold text-gray-900">
+      {/* Main Score */}
+      <div className="relative mb-5">
+        <div className="flex items-baseline gap-2">
+          <span className="text-5xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
             {currentScore.toFixed(4)}
-          </p>
-          <p className="text-sm text-gray-500 mt-1">{metric.toUpperCase()}</p>
+          </span>
+          {showTrend && previousScore !== undefined && (
+            <div className={`flex items-center gap-1 px-2.5 py-1 rounded-lg ${trend.bg} ${trend.border} border`}>
+              <TrendIcon className={`w-4 h-4 ${trend.color}`} />
+              <span className={`text-sm font-semibold ${trend.color}`}>
+                {improvement >= 0 ? '+' : ''}{improvement.toFixed(4)}
+              </span>
+            </div>
+          )}
         </div>
-
-        {showTrend && previousScore !== undefined && (
-          <div className={`flex items-center gap-1 ${getTrendColor()}`}>
-            {getTrendIcon()}
-            <span className="text-sm font-medium">
-              {improvement >= 0 ? '+' : ''}{improvement.toFixed(4)}
-              {' '}({improvementPercent >= 0 ? '+' : ''}{improvementPercent.toFixed(2)}%)
-            </span>
-          </div>
-        )}
+        
+        {/* Score Progress Bar */}
+        <div className="mt-4 h-2 bg-slate-200 rounded-full overflow-hidden">
+          <div 
+            className="h-full bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full transition-all duration-500"
+            style={{ width: `${scorePercent}%` }}
+          />
+        </div>
+        <div className="flex justify-between mt-1.5 text-xs text-slate-400">
+          <span>0.0</span>
+          <span>1.0</span>
+        </div>
       </div>
 
-      {bestScore !== undefined && !isBestScore && (
-        <div className="mt-4 pt-4 border-t border-gray-100">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-500">Best Score</span>
-            <span className="font-medium text-gray-900">{bestScore.toFixed(4)}</span>
+      {/* Trend Details */}
+      {showTrend && previousScore !== undefined && (
+        <div className={`flex items-center justify-between p-3 rounded-xl ${trend.bg} ${trend.border} border mb-4`}>
+          <div className="flex items-center gap-2">
+            <Sparkles className={`w-4 h-4 ${trend.color}`} />
+            <span className="text-sm text-slate-600">Change from previous</span>
           </div>
-          <div className="flex items-center justify-between text-sm mt-1">
-            <span className="text-gray-500">Gap to Best</span>
-            <span className={`font-medium ${bestScore > currentScore ? 'text-red-600' : 'text-green-600'}`}>
+          <span className={`text-sm font-semibold ${trend.color}`}>
+            {improvementPercent >= 0 ? '+' : ''}{improvementPercent.toFixed(2)}%
+          </span>
+        </div>
+      )}
+
+      {/* Best Score Comparison */}
+      {bestScore !== undefined && !isBestScore && (
+        <div className="pt-4 border-t border-slate-200/60 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-slate-500">Best Score</span>
+            <span className="text-sm font-semibold text-slate-900">{bestScore.toFixed(4)}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-slate-500">Gap to Best</span>
+            <span className={`text-sm font-semibold ${bestScore > currentScore ? 'text-rose-600' : 'text-emerald-600'}`}>
               {(currentScore - bestScore).toFixed(4)}
             </span>
           </div>

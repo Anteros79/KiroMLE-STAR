@@ -10,6 +10,11 @@ from mle_star.tools.web_search import (
     WebSearchResponse,
     web_search,
     search_ml_models,
+    search_ml_models_with_fallback,
+    get_fallback_models,
+    web_search_with_cache,
+    clear_search_cache,
+    FALLBACK_MODELS,
 )
 from mle_star.tools.file_utils import (
     DatasetValidationResult,
@@ -33,6 +38,11 @@ __all__ = [
     "WebSearchResponse",
     "web_search",
     "search_ml_models",
+    "search_ml_models_with_fallback",
+    "get_fallback_models",
+    "web_search_with_cache",
+    "clear_search_cache",
+    "FALLBACK_MODELS",
     # file_utils
     "DatasetValidationResult",
     "validate_dataset_path",

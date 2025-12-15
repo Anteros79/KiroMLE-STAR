@@ -1,4 +1,6 @@
 // MLE-STAR Configuration Types
+export type ModelProvider = 'ollama' | 'bedrock' | 'openai';
+
 export interface MLEStarConfig {
   num_retrieved_models: number;
   inner_loop_iterations: number;
@@ -6,6 +8,8 @@ export interface MLEStarConfig {
   ensemble_iterations: number;
   max_debug_retries: number;
   model_id: string;
+  model_provider: ModelProvider;
+  ollama_base_url: string;
   temperature: number;
   max_tokens: number;
 }
@@ -102,14 +106,16 @@ export interface PipelineResults {
   ablationSummaries: string[];
 }
 
-// Default Configuration
+// Default Configuration - Using local Ollama with Gemma 3 27B
 export const DEFAULT_CONFIG: MLEStarConfig = {
   num_retrieved_models: 4,
   inner_loop_iterations: 4,
   outer_loop_iterations: 4,
   ensemble_iterations: 5,
   max_debug_retries: 3,
-  model_id: 'anthropic.claude-sonnet-4-20250514-v1:0',
+  model_id: 'gemma3:27b',
+  model_provider: 'ollama',
+  ollama_base_url: 'http://localhost:11434',
   temperature: 0.7,
   max_tokens: 4096,
 };

@@ -1,24 +1,42 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
-import { Upload, File, X, CheckCircle, AlertCircle } from 'lucide-react';
+import React, { useState, useRef, useCallback } from 'react';
+import { Upload, File, X, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
+import { datasetAPI, UploadResponse } from '@/services/api';
 
 interface DatasetUploadProps {
   onUpload: (files: File[]) => void;
   disabled?: boolean;
+  runId?: string;
 }
 
 interface UploadedFile {
   file: File;
-  status: 'uploading' | 'success' | 'error';
+  status: 'pending' | 'uploading' | 'success' | 'error';
   progress: number;
   error?: string;
+  path?: string;
 }
 
-export default function DatasetUpload({ onUpload, disabled }: DatasetUploadProps) {
+const ALLOWED_EXTENSIONS = ['csv', 'json', 'parquet', 'xlsx', 'xls', 'zip', 'png', 'jpg', 'jpeg', 'wav', 'mp3'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+
+export default function DatasetUpload({ onUpload, disabled, runId }: DatasetUploadProps) {
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [isDragging, setIsDragging] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const validateFile = useCallback((file: File): string | null => {
+    const ext = file.name.split('.').pop()?.toLowerCase();
+    if (!ext || !ALLOWED_EXTENSIONS.includes(ext)) {
+      return `File type .${ext} not allowed. Allowed: ${ALLOWED_EXTENSIONS.join(', ')}`;
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      return `File too large. Maximum size is 500MB.`;
+    }
+    return null;
+  }, []);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -47,48 +65,91 @@ export default function DatasetUpload({ onUpload, disabled }: DatasetUploadProps
     }
   };
 
-  const handleFiles = (files: File[]) => {
-    const validFiles = files.filter(file => {
-      const ext = file.name.split('.').pop()?.toLowerCase();
-      return ['csv', 'json', 'parquet', 'xlsx', 'xls', 'zip'].includes(ext || '');
+  const handleFiles = async (files: File[]) => {
+    // Validate files first
+    const validatedFiles: UploadedFile[] = files.map(file => {
+      const error = validateFile(file);
+      return {
+        file,
+        status: error ? 'error' as const : 'pending' as const,
+        progress: 0,
+        error: error || undefined,
+      };
     });
 
-    const newUploadedFiles: UploadedFile[] = validFiles.map(file => ({
-      file,
-      status: 'uploading' as const,
-      progress: 0,
-    }));
+    setUploadedFiles(prev => [...prev, ...validatedFiles]);
 
-    setUploadedFiles(prev => [...prev, ...newUploadedFiles]);
+    // Get files that passed validation
+    const validFiles = validatedFiles.filter(f => f.status === 'pending').map(f => f.file);
+    
+    if (validFiles.length === 0) return;
 
-    // Simulate upload progress
-    validFiles.forEach((file, index) => {
-      simulateUpload(uploadedFiles.length + index);
-    });
+    // Upload valid files
+    setIsUploading(true);
+    
+    // Update status to uploading
+    setUploadedFiles(prev => prev.map(f => 
+      validFiles.includes(f.file) ? { ...f, status: 'uploading' as const } : f
+    ));
 
-    onUpload(validFiles);
+    try {
+      const response: UploadResponse = await datasetAPI.upload(
+        validFiles,
+        runId,
+        (progress) => {
+          setUploadedFiles(prev => prev.map(f => 
+            validFiles.includes(f.file) && f.status === 'uploading'
+              ? { ...f, progress }
+              : f
+          ));
+        }
+      );
+
+      // Update file statuses based on response
+      setUploadedFiles(prev => prev.map(f => {
+        const uploaded = response.uploaded.find(u => u.filename === f.file.name);
+        const error = response.errors.find(e => e.filename === f.file.name);
+        
+        if (uploaded) {
+          return { ...f, status: 'success' as const, progress: 100, path: uploaded.path };
+        } else if (error) {
+          return { ...f, status: 'error' as const, error: error.error };
+        }
+        return f;
+      }));
+
+      // Notify parent of successful uploads
+      const successfulFiles = validFiles.filter(f => 
+        response.uploaded.some(u => u.filename === f.name)
+      );
+      if (successfulFiles.length > 0) {
+        onUpload(successfulFiles);
+      }
+
+    } catch (error) {
+      // Mark all uploading files as error
+      const errorMessage = error instanceof Error ? error.message : 'Upload failed';
+      setUploadedFiles(prev => prev.map(f => 
+        validFiles.includes(f.file) && f.status === 'uploading'
+          ? { ...f, status: 'error' as const, error: errorMessage }
+          : f
+      ));
+    } finally {
+      setIsUploading(false);
+    }
   };
 
-  const simulateUpload = (index: number) => {
-    let progress = 0;
-    const interval = setInterval(() => {
-      progress += Math.random() * 30;
-      if (progress >= 100) {
-        progress = 100;
-        clearInterval(interval);
-        setUploadedFiles(prev => 
-          prev.map((f, i) => 
-            i === index ? { ...f, status: 'success', progress: 100 } : f
-          )
-        );
-      } else {
-        setUploadedFiles(prev => 
-          prev.map((f, i) => 
-            i === index ? { ...f, progress } : f
-          )
-        );
-      }
-    }, 200);
+  const retryUpload = async (index: number) => {
+    const fileToRetry = uploadedFiles[index];
+    if (!fileToRetry || fileToRetry.status !== 'error') return;
+
+    // Reset status
+    setUploadedFiles(prev => prev.map((f, i) => 
+      i === index ? { ...f, status: 'pending' as const, error: undefined, progress: 0 } : f
+    ));
+
+    // Re-upload
+    await handleFiles([fileToRetry.file]);
   };
 
   const removeFile = (index: number) => {
@@ -107,22 +168,22 @@ export default function DatasetUpload({ onUpload, disabled }: DatasetUploadProps
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        onClick={() => !disabled && fileInputRef.current?.click()}
-        className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
+        onClick={() => !disabled && !isUploading && fileInputRef.current?.click()}
+        className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
           isDragging
             ? 'border-primary-500 bg-primary-50'
-            : disabled
+            : disabled || isUploading
             ? 'border-gray-200 bg-gray-50 cursor-not-allowed'
-            : 'border-gray-300 hover:border-primary-400 hover:bg-gray-50'
+            : 'border-gray-300 hover:border-primary-400 hover:bg-gray-50 cursor-pointer'
         }`}
       >
         <input
           ref={fileInputRef}
           type="file"
           multiple
-          accept=".csv,.json,.parquet,.xlsx,.xls,.zip"
+          accept={ALLOWED_EXTENSIONS.map(ext => `.${ext}`).join(',')}
           onChange={handleFileSelect}
-          disabled={disabled}
+          disabled={disabled || isUploading}
           className="hidden"
         />
         
@@ -131,12 +192,14 @@ export default function DatasetUpload({ onUpload, disabled }: DatasetUploadProps
         }`} />
         
         <p className="text-gray-600 mb-2">
-          {isDragging
+          {isUploading
+            ? 'Uploading files...'
+            : isDragging
             ? 'Drop files here...'
             : 'Drag and drop dataset files here, or click to browse'}
         </p>
         <p className="text-sm text-gray-400">
-          Supported formats: CSV, JSON, Parquet, Excel, ZIP
+          Supported: CSV, JSON, Parquet, Excel, ZIP, Images, Audio (max 500MB)
         </p>
       </div>
 
@@ -148,7 +211,7 @@ export default function DatasetUpload({ onUpload, disabled }: DatasetUploadProps
               key={index}
               className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
             >
-              <File className="w-5 h-5 text-gray-400" />
+              <File className="w-5 h-5 text-gray-400 flex-shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-700 truncate">
                   {uploadedFile.file.name}
@@ -164,19 +227,38 @@ export default function DatasetUpload({ onUpload, disabled }: DatasetUploadProps
                     />
                   </div>
                 )}
+                {uploadedFile.error && (
+                  <p className="text-xs text-red-500 mt-1">{uploadedFile.error}</p>
+                )}
               </div>
               {uploadedFile.status === 'success' && (
-                <CheckCircle className="w-5 h-5 text-green-500" />
+                <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
               )}
               {uploadedFile.status === 'error' && (
-                <AlertCircle className="w-5 h-5 text-red-500" />
+                <div className="flex items-center gap-1">
+                  <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      retryUpload(index);
+                    }}
+                    className="text-gray-400 hover:text-primary-500"
+                    title="Retry upload"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+              {uploadedFile.status === 'uploading' && (
+                <div className="w-5 h-5 border-2 border-primary-500 border-t-transparent rounded-full animate-spin flex-shrink-0" />
               )}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   removeFile(index);
                 }}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-400 hover:text-gray-600 flex-shrink-0"
+                disabled={uploadedFile.status === 'uploading'}
               >
                 <X className="w-5 h-5" />
               </button>

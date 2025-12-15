@@ -10,6 +10,7 @@ from strands import Agent
 
 from mle_star.models.data_models import RefinementAttempt
 from mle_star.models.config import MLEStarConfig
+from mle_star.models.model_factory import create_model
 
 
 PLANNER_SYSTEM_PROMPT = """You are a Kaggle grandmaster with expertise in ML optimization strategies.
@@ -80,7 +81,7 @@ def create_planner_agent(config: MLEStarConfig) -> Agent:
         name="planner",
         system_prompt=PLANNER_SYSTEM_PROMPT,
         tools=[],  # No tools needed - pure planning
-        model=config.model_id,
+        model=create_model(config),
         temperature=config.temperature,
         max_tokens=config.max_tokens,
     )

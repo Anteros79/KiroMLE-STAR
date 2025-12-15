@@ -11,6 +11,7 @@ from strands import Agent
 
 from mle_star.models.data_models import EnsembleResult
 from mle_star.models.config import MLEStarConfig
+from mle_star.models.model_factory import create_model
 
 
 ENSEMBLE_PLANNER_SYSTEM_PROMPT = """You are a Kaggle grandmaster with extensive experience in ensemble methods.
@@ -80,7 +81,7 @@ def create_ensemble_planner_agent(config: MLEStarConfig) -> Agent:
         name="ensemble_planner",
         system_prompt=ENSEMBLE_PLANNER_SYSTEM_PROMPT,
         tools=[],  # No tools needed - pure planning
-        model=config.model_id,
+        model=create_model(config),
         temperature=config.temperature,
         max_tokens=config.max_tokens,
     )

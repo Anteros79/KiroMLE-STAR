@@ -9,6 +9,7 @@ from typing import Optional
 from strands import Agent
 
 from mle_star.models.config import MLEStarConfig
+from mle_star.models.model_factory import create_model
 from mle_star.models.data_models import TaskDescription
 
 
@@ -69,7 +70,7 @@ def create_data_usage_checker_agent(config: MLEStarConfig) -> Agent:
         name="data_usage_checker",
         system_prompt=DATA_USAGE_CHECKER_SYSTEM_PROMPT,
         tools=[],
-        model=config.model_id,
+        model=create_model(config),
         temperature=config.temperature,
         max_tokens=config.max_tokens,
     )

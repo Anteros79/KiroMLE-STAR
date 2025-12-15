@@ -10,6 +10,7 @@ from strands import Agent, tool
 
 from mle_star.models.data_models import TaskDescription, EnsembleResult
 from mle_star.models.config import MLEStarConfig
+from mle_star.models.model_factory import create_model
 from mle_star.tools.execute_python import execute_python, ExecutionResult
 from mle_star.agents.ensemble_planner import EnsemblePlan
 
@@ -94,7 +95,7 @@ def create_ensembler_agent(config: MLEStarConfig) -> Agent:
         name="ensembler",
         system_prompt=ENSEMBLER_SYSTEM_PROMPT,
         tools=[run_python_code],
-        model=config.model_id,
+        model=create_model(config),
         temperature=config.temperature,
         max_tokens=config.max_tokens,
     )

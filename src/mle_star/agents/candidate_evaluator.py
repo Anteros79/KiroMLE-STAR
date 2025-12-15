@@ -9,6 +9,7 @@ from strands import Agent, tool
 
 from mle_star.models.data_models import TaskDescription, ModelCandidate
 from mle_star.models.config import MLEStarConfig
+from mle_star.models.model_factory import create_model
 from mle_star.tools.execute_python import execute_python, ExecutionResult
 
 
@@ -82,7 +83,7 @@ def create_candidate_evaluator_agent(config: MLEStarConfig) -> Agent:
         name="candidate_evaluator",
         system_prompt=CANDIDATE_EVAL_SYSTEM_PROMPT,
         tools=[run_python_code],
-        model=config.model_id,
+        model=create_model(config),
         temperature=config.temperature,
         max_tokens=config.max_tokens,
     )

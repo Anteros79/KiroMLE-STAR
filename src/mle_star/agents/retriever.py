@@ -9,6 +9,7 @@ from strands import Agent, tool
 
 from mle_star.models.data_models import TaskDescription, ModelCandidate
 from mle_star.models.config import MLEStarConfig
+from mle_star.models.model_factory import create_model
 from mle_star.tools.web_search import web_search, WebSearchResponse
 
 
@@ -76,7 +77,7 @@ def create_retriever_agent(config: MLEStarConfig) -> Agent:
         name="retriever",
         system_prompt=RETRIEVER_SYSTEM_PROMPT,
         tools=[search_models],
-        model=config.model_id,
+        model=create_model(config),
         temperature=config.temperature,
         max_tokens=config.max_tokens,
     )

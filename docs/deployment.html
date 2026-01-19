@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MLE-STAR - Deployment Guide</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; border-radius: 10px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); overflow: hidden; }
+        header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px; text-align: center; }
+        header h1 { font-size: 2.5em; margin-bottom: 10px; }
+        .content { padding: 40px; }
+        section { margin-bottom: 40px; }
+        h2 { color: #667eea; border-bottom: 3px solid #667eea; padding-bottom: 10px; margin-bottom: 20px; font-size: 1.8em; }
+        h3 { color: #764ba2; margin-top: 20px; margin-bottom: 10px; font-size: 1.3em; }
+        .code-block { background: #2d2d2d; color: #f8f8f2; padding: 15px; border-radius: 5px; overflow-x: auto; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9em; }
+        .step-box { background: #f9f9f9; border: 2px solid #e0e0e0; border-radius: 8px; padding: 20px; margin: 15px 0; }
+        .step-box h4 { color: #667eea; margin-bottom: 10px; }
+        .requirement { background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%); border-left: 4px solid #667eea; padding: 15px; margin: 15px 0; border-radius: 5px; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th { background: #667eea; color: white; padding: 12px; text-align: left; }
+        td { padding: 12px; border-bottom: 1px solid #ddd; }
+        tr:hover { background: #f5f5f5; }
+        .success { background: #e8f5e9; border-left: 4px solid #4caf50; padding: 15px; margin: 15px 0; border-radius: 5px; }
+        footer { background: #f5f5f5; padding: 20px; text-align: center; color: #666; border-top: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 MLE-STAR Deployment Guide</h1>
+            <p>Complete Deployment Instructions & Configuration</p>
+        </header>
+        
+        <div class="content">
+            <section>
+                <h2>Prerequisites</h2>
+                
+                <div class="requirement">
+                    <strong>System Requirements:</strong>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li>OS: Linux, macOS, or Windows with WSL2</li>
+                        <li>CPU: 4+ cores recommended</li>
+                        <li>RAM: 8GB minimum, 16GB recommended</li>
+                        <li>Disk: 20GB free space</li>
+                    </ul>
+                </div>
+                
+                <div class="requirement">
+                    <strong>Software Requirements:</strong>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li>Python 3.10+</li>
+                        <li>Node.js 18+</li>
+                        <li>Docker & Docker Compose (optional but recommended)</li>
+                        <li>Git</li>
+                    </ul>
+                </div>
+            </section>
+            
+            <section>
+                <h2>Local Development Setup</h2>
+                
+                <div class="step-box">
+                    <h4>Step 1: Clone Repository</h4>
+                    <div class="code-block">
+git clone https://github.com/Anteros79/KiroMLE-STAR.git
+cd KiroMLE-STAR
+                    </div>
+                </div>
+                
+                <div class="step-box">
+                    <h4>Step 2: Set Up Python Environment</h4>
+                    <div class="code-block">
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+pip install -e .
+                    </div>
+                </div>
+                
+                <div class="step-box">
+                    <h4>Step 3: Set Up Frontend</h4>
+                    <div class="code-block">
+cd frontend
+npm install
+cd ..
+                    </div>
+                </div>
+                
+                <div class="step-box">
+                    <h4>Step 4: Configure Environment Variables</h4>
+                    <div class="code-block">
+# Create .env file
+cat > .env << EOF
+# LLM Configuration
+MODEL_PROVIDER=ollama
+MODEL_ID=qwen3:30b
+OLLAMA_BASE_URL=http://localhost:11434
+
+# Optional: Google Search
+GOOGLE_API_KEY=your_api_key
+GOOGLE_SEARCH_ENGINE_ID=your_search_engine_id
+
+# Optional: AWS Bedrock
+AWS_REGION=us-east-1
+
+# Optional: OpenAI
+OPENAI_API_KEY=your_api_key
+EOF
+                    </div>
+                </div>
+                
+                <div class="step-box">
+                    <h4>Step 5: Start Services</h4>
+                    <div class="code-block">
+# Terminal 1: Start Ollama (if using local LLM)
+ollama serve
+
+# Terminal 2: Start Backend
+python -m uvicorn src.mle_star.api.server:app --reload
+
+# Terminal 3: Start Frontend
+cd frontend
+npm run dev
+                    </div>
+                </div>
+                
+                <div class="success">
+                    <strong>✓ Success!</strong> Access the application at http://localhost:3000
+                </div>
+            </section>
+            
+            <section>
+                <h2>Docker Deployment</h2>
+                
+                <div class="step-box">
+                    <h4>Step 1: Build Docker Images</h4>
+                    <div class="code-block">
+docker-compose build
+                    </div>
+                </div>
+                
+                <div class="step-box">
+                    <h4>Step 2: Start Services</h4>
+                    <div class="code-block">
+docker-compose up -d
+                    </div>
+                </div>
+                
+                <div class="step-box">
+                    <h4>Step 3: Verify Services</h4>
+                    <div class="code-block">
+docker-compose ps
+docker-compose logs -f
+                    </div>
+                </div>
+                
+                <div class="success">
+                    <strong>✓ Success!</strong> Services are running in Docker containers
+                </div>
+            </section>
+            
+            <section>
+                <h2>Production Deployment</h2>
+                
+                <h3>AWS Deployment</h3>
+                <div class="step-box">
+                    <h4>Using ECS (Elastic Container Service)</h4>
+                    <div class="code-block">
+# 1. Push images to ECR
+aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin [account-id].dkr.ecr.us-east-1.amazonaws.com
+
+docker tag mle-star-backend:latest [account-id].dkr.ecr.us-east-1.amazonaws.com/mle-star-backend:latest
+docker push [account-id].dkr.ecr.us-east-1.amazonaws.com/mle-star-backend:latest
+
+# 2. Create ECS task definition
+# 3. Create ECS service
+# 4. Configure load balancer
+                    </div>
+                </div>
+                
+                <h3>Kubernetes Deployment</h3>
+                <div class="step-box">
+                    <h4>Using kubectl</h4>
+                    <div class="code-block">
+# 1. Create namespace
+kubectl create namespace mle-star
+
+# 2. Create secrets
+kubectl create secret generic mle-star-secrets \
+  --from-literal=OPENAI_API_KEY=your_key \
+  -n mle-star
+
+# 3. Deploy services
+kubectl apply -f k8s/backend-deployment.yaml -n mle-star
+kubectl apply -f k8s/frontend-deployment.yaml -n mle-star
+kubectl apply -f k8s/service.yaml -n mle-star
+
+# 4. Verify deployment
+kubectl get pods -n mle-star
+                    </div>
+                </div>
+            </section>
+            
+            <section>
+                <h2>Configuration Management</h2>
+                
+                <h3>Environment Variables</h3>
+                <table>
+                    <tr>
+                        <th>Variable</th>
+                        <th>Description</th>
+                        <th>Default</th>
+                    </tr>
+                    <tr>
+                        <td>MODEL_PROVIDER</td>
+                        <td>LLM provider (ollama/bedrock/openai/lemonade)</td>
+                        <td>ollama</td>
+                    </tr>
+                    <tr>
+                        <td>MODEL_ID</td>
+                        <td>Model identifier</td>
+                        <td>qwen3:30b</td>
+                    </tr>
+                    <tr>
+                        <td>OLLAMA_BASE_URL</td>
+                        <td>Ollama server URL</td>
+                        <td>http://localhost:11434</td>
+                    </tr>
+                    <tr>
+                        <td>GOOGLE_API_KEY</td>
+                        <td>Google Custom Search API key</td>
+                        <td>None</td>
+                    </tr>
+                    <tr>
+                        <td>OPENAI_API_KEY</td>
+                        <td>OpenAI API key</td>
+                        <td>None</td>
+                    </tr>
+                    <tr>
+                        <td>AWS_REGION</td>
+                        <td>AWS region for Bedrock</td>
+                        <td>us-east-1</td>
+                    </tr>
+                </table>
+            </section>
+            
+            <section>
+                <h2>Monitoring & Logging</h2>
+                
+                <h3>Log Locations</h3>
+                <div class="step-box">
+                    <p><strong>Backend Logs:</strong> logs/backend.log</p>
+                    <p><strong>Frontend Logs:</strong> Browser console</p>
+                    <p><strong>Docker Logs:</strong> docker-compose logs</p>
+                </div>
+                
+                <h3>Health Checks</h3>
+                <div class="code-block">
+# Backend health check
+curl http://localhost:8000/health
+
+# Frontend health check
+curl http://localhost:3000
+
+# WebSocket test
+wscat -c ws://localhost:8000/ws/pipeline/test-run-id
+                </div>
+            </section>
+            
+            <section>
+                <h2>Troubleshooting</h2>
+                
+                <h3>Common Issues</h3>
+                
+                <div class="step-box">
+                    <h4>Port Already in Use</h4>
+                    <div class="code-block">
+# Find process using port 8000
+lsof -i :8000
+
+# Kill process
+kill -9 [PID]
+
+# Or use different port
+python -m uvicorn src.mle_star.api.server:app --port 8001
+                    </div>
+                </div>
+                
+                <div class="step-box">
+                    <h4>Ollama Connection Error</h4>
+                    <div class="code-block">
+# Verify Ollama is running
+ollama serve
+
+# Check connection
+curl http://localhost:11434/api/tags
+
+# Pull model if needed
+ollama pull qwen3:30b
+                    </div>
+                </div>
+                
+                <div class="step-box">
+                    <h4>Frontend Build Error</h4>
+                    <div class="code-block">
+# Clear cache and reinstall
+cd frontend
+rm -rf node_modules package-lock.json
+npm install
+npm run build
+                    </div>
+                </div>
+            </section>
+            
+            <section>
+                <h2>Performance Tuning</h2>
+                
+                <h3>Backend Optimization</h3>
+                <div class="requirement">
+                    <strong>Worker Processes:</strong> Set to CPU count
+                    <div class="code-block">
+python -m uvicorn src.mle_star.api.server:app --workers 4
+                    </div>
+                </div>
+                
+                <div class="requirement">
+                    <strong>Memory Limits:</strong> Configure in docker-compose.yml
+                    <div class="code-block">
+services:
+  backend:
+    mem_limit: 4g
+    memswap_limit: 4g
+                    </div>
+                </div>
+                
+                <h3>Frontend Optimization</h3>
+                <div class="requirement">
+                    <strong>Build Optimization:</strong>
+                    <div class="code-block">
+cd frontend
+npm run build
+npm run start  # Production server
+                    </div>
+                </div>
+            </section>
+            
+            <section>
+                <h2>Backup & Recovery</h2>
+                
+                <h3>Backup Strategy</h3>
+                <div class="step-box">
+                    <p><strong>Daily Backups:</strong> Backup runs/ directory</p>
+                    <div class="code-block">
+# Backup script
+tar -czf backup-$(date +%Y%m%d).tar.gz runs/
+                    </div>
+                </div>
+                
+                <h3>Recovery Procedure</h3>
+                <div class="step-box">
+                    <p><strong>Restore from Backup:</strong></p>
+                    <div class="code-block">
+tar -xzf backup-20260119.tar.gz
+                    </div>
+                </div>
+            </section>
+        </div>
+        
+        <footer>
+            <p>&copy; 2026 MLE-STAR Project. All rights reserved.</p>
+        </footer>
+    </div>
+</body>
+</html>

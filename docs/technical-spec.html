@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MLE-STAR - Technical Specification</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; border-radius: 10px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); overflow: hidden; }
+        header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px; text-align: center; }
+        header h1 { font-size: 2.5em; margin-bottom: 10px; }
+        .content { padding: 40px; }
+        section { margin-bottom: 40px; }
+        h2 { color: #667eea; border-bottom: 3px solid #667eea; padding-bottom: 10px; margin-bottom: 20px; font-size: 1.8em; }
+        h3 { color: #764ba2; margin-top: 20px; margin-bottom: 10px; font-size: 1.3em; }
+        .code-block { background: #2d2d2d; color: #f8f8f2; padding: 15px; border-radius: 5px; overflow-x: auto; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9em; }
+        .spec-box { background: #f9f9f9; border: 2px solid #e0e0e0; border-radius: 8px; padding: 20px; margin: 15px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th { background: #667eea; color: white; padding: 12px; text-align: left; }
+        td { padding: 12px; border-bottom: 1px solid #ddd; }
+        tr:hover { background: #f5f5f5; }
+        .requirement { background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%); border-left: 4px solid #667eea; padding: 15px; margin: 15px 0; border-radius: 5px; }
+        footer { background: #f5f5f5; padding: 20px; text-align: center; color: #666; border-top: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⚙️ MLE-STAR Technical Specification</h1>
+            <p>Implementation Details & Technical Requirements</p>
+        </header>
+        
+        <div class="content">
+            <section>
+                <h2>Backend Implementation</h2>
+                
+                <h3>FastAPI Server</h3>
+                <div class="spec-box">
+                    <p><strong>Framework:</strong> FastAPI 0.104+</p>
+                    <p><strong>Async Runtime:</strong> Uvicorn</p>
+                    <p><strong>Port:</strong> 8000 (default)</p>
+                    <p><strong>Features:</strong> REST API, WebSocket, automatic documentation</p>
+                </div>
+                
+                <h3>Python Execution Sandbox</h3>
+                <div class="requirement">
+                    <strong>Requirement:</strong> Execute generated Python code in isolated environment
+                </div>
+                <div class="spec-box">
+                    <p><strong>Implementation:</strong> subprocess module with timeout</p>
+                    <p><strong>Timeout:</strong> 5 minutes (configurable)</p>
+                    <p><strong>Memory Limit:</strong> 4GB (configurable)</p>
+                    <p><strong>Output Capture:</strong> stdout, stderr, return code</p>
+                </div>
+                
+                <h3>State Management</h3>
+                <div class="spec-box">
+                    <p><strong>RunManager Class:</strong> Manages pipeline run state</p>
+                    <p><strong>Persistence:</strong> JSON files in runs/ directory</p>
+                    <p><strong>Checkpoint Interval:</strong> After each phase</p>
+                    <p><strong>Recovery:</strong> Resume from last checkpoint</p>
+                </div>
+                
+                <h3>Model Factory</h3>
+                <div class="spec-box">
+                    <p><strong>Supported Providers:</strong></p>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li>Ollama (local, default)</li>
+                        <li>AWS Bedrock</li>
+                        <li>OpenAI</li>
+                        <li>Lemonade/llama.cpp</li>
+                    </ul>
+                    <p style="margin-top: 15px;"><strong>Configuration:</strong> Environment variables or config file</p>
+                </div>
+            </section>
+            
+            <section>
+                <h2>Frontend Implementation</h2>
+                
+                <h3>Next.js Application</h3>
+                <div class="spec-box">
+                    <p><strong>Framework:</strong> Next.js 14+</p>
+                    <p><strong>Language:</strong> TypeScript</p>
+                    <p><strong>Styling:</strong> Tailwind CSS</p>
+                    <p><strong>Port:</strong> 3000 (default)</p>
+                </div>
+                
+                <h3>API Client Service</h3>
+                <div class="spec-box">
+                    <p><strong>Location:</strong> frontend/src/services/api.ts</p>
+                    <p><strong>Features:</strong></p>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li>REST API calls with error handling</li>
+                        <li>WebSocket connection management</li>
+                        <li>Automatic reconnection with exponential backoff</li>
+                        <li>Request/response interceptors</li>
+                    </ul>
+                </div>
+                
+                <h3>Real-Time Updates</h3>
+                <div class="spec-box">
+                    <p><strong>WebSocket Connection:</strong> /ws/pipeline/{run_id}</p>
+                    <p><strong>Message Types:</strong></p>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li>agent_update: Agent status changes</li>
+                        <li>phase_update: Phase transitions</li>
+                        <li>log_entry: New log messages</li>
+                        <li>score_update: Performance score changes</li>
+                    </ul>
+                </div>
+            </section>
+            
+            <section>
+                <h2>Agent Implementation</h2>
+                
+                <h3>Agent Base Class</h3>
+                <div class="code-block">
+class Agent:
+    def __init__(self, model_provider: str, model_id: str):
+        self.model = create_model(model_provider, model_id)
+    
+    async def execute(self, input_data: dict) -> dict:
+        prompt = self.build_prompt(input_data)
+        response = await self.model.generate(prompt)
+        return self.parse_response(response)
+                </div>
+                
+                <h3>Prompt Engineering</h3>
+                <div class="spec-box">
+                    <p><strong>Prompt Structure:</strong></p>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li>System message: Agent role and responsibilities</li>
+                        <li>Context: Task description and data</li>
+                        <li>Instructions: Specific task requirements</li>
+                        <li>Examples: Few-shot examples</li>
+                        <li>Output format: XML-style tags for parsing</li>
+                    </ul>
+                </div>
+                
+                <h3>Error Handling</h3>
+                <div class="spec-box">
+                    <p><strong>Retry Logic:</strong> Exponential backoff (max 3 attempts)</p>
+                    <p><strong>Fallback:</strong> Use cached results or default values</p>
+                    <p><strong>Logging:</strong> Comprehensive error logging</p>
+                </div>
+            </section>
+            
+            <section>
+                <h2>Data Models</h2>
+                
+                <h3>TaskDescription</h3>
+                <div class="code-block">
+class TaskDescription(BaseModel):
+    description: str
+    task_type: str  # classification, regression, etc.
+    data_modality: str  # tabular, image, text
+    evaluation_metric: str
+    dataset_path: str
+    train_file: Optional[str] = None
+    test_file: Optional[str] = None
+                </div>
+                
+                <h3>PipelineRun</h3>
+                <div class="code-block">
+class PipelineRun(BaseModel):
+    run_id: str
+    task: TaskDescription
+    status: str  # pending, running, completed, failed
+    phase: int  # 1, 2, 3
+    agents: Dict[str, AgentStatus]
+    scores: Dict[str, float]
+    created_at: datetime
+    updated_at: datetime
+                </div>
+            </section>
+            
+            <section>
+                <h2>Database Schema</h2>
+                
+                <h3>File-Based Storage</h3>
+                <div class="spec-box">
+                    <p><strong>Directory Structure:</strong></p>
+                    <div class="code-block">
+runs/
+  {run_id}/
+    config.json          # Task configuration
+    state.json           # Pipeline state
+    phase1/
+      initial_solution.py
+      scores.json
+    phase2/
+      refinement_1.py
+      ablation_results.json
+    phase3/
+      ensemble.py
+      submission.csv
+                    </div>
+                </div>
+            </section>
+            
+            <section>
+                <h2>Security Implementation</h2>
+                
+                <h3>Input Validation</h3>
+                <div class="requirement">
+                    <strong>Requirement:</strong> Validate all API inputs using Pydantic models
+                </div>
+                
+                <h3>Code Execution Sandbox</h3>
+                <div class="requirement">
+                    <strong>Requirement:</strong> Execute generated code in isolated subprocess with resource limits
+                </div>
+                
+                <h3>Secret Management</h3>
+                <div class="requirement">
+                    <strong>Requirement:</strong> Use environment variables for API keys, no hardcoded secrets
+                </div>
+                
+                <h3>Security Scanning</h3>
+                <div class="spec-box">
+                    <p><strong>Components:</strong></p>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li>Secret detector: Finds hardcoded secrets</li>
+                        <li>API auditor: Checks OWASP Top 10 compliance</li>
+                        <li>Dependency analyzer: Scans for vulnerable packages</li>
+                    </ul>
+                </div>
+            </section>
+            
+            <section>
+                <h2>Performance Optimization</h2>
+                
+                <h3>Caching</h3>
+                <div class="spec-box">
+                    <p><strong>Web Search Cache:</strong> Cache identical queries for 24 hours</p>
+                    <p><strong>Model Cache:</strong> Cache LLM responses for identical prompts</p>
+                </div>
+                
+                <h3>Parallelization</h3>
+                <div class="spec-box">
+                    <p><strong>Concurrent Evaluation:</strong> Evaluate multiple models in parallel</p>
+                    <p><strong>Async Operations:</strong> Use async/await for I/O operations</p>
+                </div>
+                
+                <h3>Resource Management</h3>
+                <div class="spec-box">
+                    <p><strong>Memory Limits:</strong> 4GB per code execution</p>
+                    <p><strong>Timeout Limits:</strong> 5 minutes per code execution</p>
+                    <p><strong>Disk Cleanup:</strong> Remove old runs after 30 days</p>
+                </div>
+            </section>
+            
+            <section>
+                <h2>Deployment Configuration</h2>
+                
+                <h3>Docker Setup</h3>
+                <div class="code-block">
+# Backend Dockerfile
+FROM python:3.11-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+COPY src/ .
+CMD ["uvicorn", "mle_star.api.server:app", "--host", "0.0.0.0"]
+                </div>
+                
+                <h3>Docker Compose</h3>
+                <div class="spec-box">
+                    <p><strong>Services:</strong></p>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li>backend: FastAPI server</li>
+                        <li>frontend: Next.js application</li>
+                        <li>ollama: Local LLM (optional)</li>
+                    </ul>
+                </div>
+            </section>
+            
+            <section>
+                <h2>Monitoring & Logging</h2>
+                
+                <h3>Structured Logging</h3>
+                <div class="spec-box">
+                    <p><strong>Format:</strong> JSON with correlation IDs</p>
+                    <p><strong>Levels:</strong> DEBUG, INFO, WARNING, ERROR, CRITICAL</p>
+                    <p><strong>Output:</strong> Console and file</p>
+                </div>
+                
+                <h3>Metrics</h3>
+                <div class="spec-box">
+                    <p><strong>Pipeline Metrics:</strong></p>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li>Execution time per phase</li>
+                        <li>Success/failure rates</li>
+                        <li>Agent latencies</li>
+                        <li>Resource usage</li>
+                    </ul>
+                </div>
+            </section>
+        </div>
+        
+        <footer>
+            <p>&copy; 2026 MLE-STAR Project. All rights reserved.</p>
+        </footer>
+    </div>
+</body>
+</html>

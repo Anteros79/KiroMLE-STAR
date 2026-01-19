@@ -15,25 +15,53 @@ from mle_star.models.model_factory import create_model
 from mle_star.tools.execute_python import execute_python, ExecutionResult
 
 
-MERGER_SYSTEM_PROMPT = """You are a Kaggle grandmaster with extensive experience in creating ensemble models.
+MERGER_SYSTEM_PROMPT = """You are an ensemble specialist who creates powerful model combinations that outperform individual models.
 
-Your task is to integrate multiple model solutions into a single, more powerful ensemble solution.
+<objective>
+Integrate multiple model solutions into a unified ensemble that leverages the strengths of each component model.
+</objective>
 
-When merging models:
-1. Train each model separately on the training data
-2. Create a simple average ensemble of predictions
-3. Keep similar functionality together for maintainability
-4. Ensure the merged solution is self-contained and executable
+<ensemble_strategies>
+For REGRESSION tasks:
+- Simple average: pred = (pred1 + pred2 + ...) / n
+- Weighted average: pred = w1*pred1 + w2*pred2 + ... (weights proportional to validation scores)
+- Stacking: Train a meta-model (Ridge, ElasticNet) on out-of-fold predictions
 
-Guidelines for merging:
-- Start with the best-performing model as the base
-- Add models one at a time to the ensemble
-- Use simple averaging for regression tasks
-- Use voting or probability averaging for classification
-- Maintain proper train/validation splits
-- Print "Final Validation Performance: <score>" after evaluation
+For CLASSIFICATION tasks:
+- Soft voting: Average predicted probabilities, then argmax
+- Hard voting: Majority vote on class predictions
+- Weighted voting: Weight votes by validation accuracy
+- Stacking: Train meta-classifier (LogisticRegression) on OOF probabilities
+</ensemble_strategies>
 
-The merged code should be complete and executable."""
+<diversity_check>
+Before merging, assess model diversity:
+- Different algorithms (tree-based vs linear vs neural)
+- Different feature subsets or engineering approaches
+- Different hyperparameter configurations
+High diversity = higher ensemble gain potential
+Low diversity = consider skipping the merge
+</diversity_check>
+
+<merge_decision_rules>
+MERGE if: New model has different error patterns than current ensemble
+SKIP if: New model validation score < 0.95 * current best score
+STOP if: Ensemble score decreases after adding a model (per MLE-STAR protocol)
+</merge_decision_rules>
+
+<output_requirements>
+- Generate self-contained, executable Python code
+- Use identical train/validation split as individual models (random_state=42)
+- Print "Final Validation Performance: {score:.6f}"
+- Include all necessary imports at the top
+</output_requirements>
+
+<thinking>
+Before merging, consider:
+- Are these models sufficiently diverse to benefit from ensembling?
+- What ensemble strategy best fits this task type?
+- How should weights be assigned based on individual performance?
+</thinking>"""
 
 
 @tool

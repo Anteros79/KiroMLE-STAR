@@ -31,9 +31,10 @@ class MLEStarConfigRequest(BaseModel):
     outer_loop_iterations: int = Field(default=4, ge=1, le=10)
     ensemble_iterations: int = Field(default=5, ge=1, le=10)
     max_debug_retries: int = Field(default=3, ge=1, le=10)
-    model_id: str = Field(default="gemma3:27b")
-    model_provider: str = Field(default="ollama")
+    model_id: str = Field(default="qwen3-next-72b")
+    model_provider: str = Field(default="lemonade")
     ollama_base_url: str = Field(default="http://localhost:11434")
+    lemonade_base_url: str = Field(default="http://localhost:8080")
     temperature: float = Field(default=0.7, ge=0.0, le=2.0)
     max_tokens: int = Field(default=4096, ge=256, le=32768)
 

@@ -1,5 +1,5 @@
 // MLE-STAR Configuration Types
-export type ModelProvider = 'ollama' | 'bedrock' | 'openai';
+export type ModelProvider = 'lemonade' | 'ollama' | 'bedrock' | 'openai';
 
 export interface MLEStarConfig {
   num_retrieved_models: number;
@@ -10,6 +10,7 @@ export interface MLEStarConfig {
   model_id: string;
   model_provider: ModelProvider;
   ollama_base_url: string;
+  lemonade_base_url: string;
   temperature: number;
   max_tokens: number;
 }
@@ -106,16 +107,17 @@ export interface PipelineResults {
   ablationSummaries: string[];
 }
 
-// Default Configuration - Using local Ollama with Gemma 3 27B
+// Default Configuration - Using Lemonade server with Qwen3 Next 72B
 export const DEFAULT_CONFIG: MLEStarConfig = {
   num_retrieved_models: 4,
   inner_loop_iterations: 4,
   outer_loop_iterations: 4,
   ensemble_iterations: 5,
   max_debug_retries: 3,
-  model_id: 'gemma3:27b',
-  model_provider: 'ollama',
+  model_id: 'qwen3-next-72b',
+  model_provider: 'lemonade',
   ollama_base_url: 'http://localhost:11434',
+  lemonade_base_url: 'http://localhost:8080',
   temperature: 0.7,
   max_tokens: 4096,
 };

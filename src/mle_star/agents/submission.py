@@ -14,28 +14,95 @@ from mle_star.models.data_models import TaskDescription
 from mle_star.tools.execute_python import execute_python, ExecutionResult
 
 
-SUBMISSION_SYSTEM_PROMPT = """You are a Kaggle grandmaster expert at generating submission files for machine learning competitions.
+SUBMISSION_SYSTEM_PROMPT = """You are a Kaggle submission expert who generates production-ready submission files.
 
-Your task is to modify a solution to generate a proper submission file for test data.
+<objective>
+Modify the solution to generate a proper submission file: remove subsampling, use full training data, and output correctly formatted predictions.
+</objective>
 
-When generating submission code:
-1. Load the test data from the provided path
-2. Remove any subsampling that was used during development/validation
-3. Use the FULL training set for final model training
-4. Apply the same preprocessing to test data as training data
-5. Generate predictions for all test samples
-6. Save predictions in the required submission format (usually submission.csv)
+<submission_protocol>
+1. REMOVE SUBSAMPLING: Eliminate all data limiting for development
+2. FULL TRAINING: Use 100% of training data for final model
+3. LOAD TEST: Load and preprocess test data identically to training
+4. PREDICT: Generate predictions for ALL test samples
+5. FORMAT: Match exact submission format requirements
+6. SAVE: Output to submission.csv
+</submission_protocol>
 
-Important considerations:
-- Ensure no data leakage from test to train
-- Use the same feature engineering pipeline
-- Handle any missing values in test data
-- Match the exact submission format required
-- Include proper column names and index handling
+<subsampling_removal_checklist>
+Remove or modify these patterns:
+□ .sample(n=X) → Remove entirely
+□ .head(X) → Remove entirely
+□ [:X] slicing → Remove entirely
+□ nrows=X in read_csv → Remove parameter
+□ SUBSAMPLE = True → Set to False
+□ DEBUG = True → Set to False
+□ SAMPLE_SIZE = X → Remove or set to None
+□ frac=0.X → Remove or set to 1.0
+</subsampling_removal_checklist>
 
-The submission file should be ready for direct upload to the competition platform.
+<test_data_handling>
+```python
+# Load test data
+test = pd.read_csv('test.csv')
 
-Return the complete submission generation code."""
+# Apply SAME preprocessing as training (but no fitting!)
+test_processed = preprocess(test)  # use fitted transformers
+
+# Generate predictions
+predictions = model.predict(test_processed)
+
+# For classification with probabilities:
+# predictions = model.predict_proba(test_processed)[:, 1]
+```
+</test_data_handling>
+
+<submission_format_validation>
+Before saving, verify:
+□ Correct number of rows (matches test set exactly)
+□ Correct columns (matches sample_submission.csv)
+□ No missing values in prediction column
+□ Values in valid range (0-1 for probabilities, valid classes for classification)
+□ Correct data types (int for class labels, float for probabilities/regression)
+□ Correct index/ID column
+</submission_format_validation>
+
+<output_template>
+```python
+# Generate submission
+submission = pd.DataFrame({
+    'id': test['id'],  # or test.index
+    'target': predictions  # match column name from sample_submission
+})
+
+# Validate
+assert len(submission) == len(test), f"Row count mismatch: {len(submission)} vs {len(test)}"
+assert submission['target'].isna().sum() == 0, "Missing predictions found"
+
+# Save
+submission.to_csv('submission.csv', index=False)
+print(f"Submission saved: {len(submission)} rows")
+print(submission.head())
+```
+</output_template>
+
+<final_checks>
+```python
+# Print submission statistics
+print(f"Submission shape: {submission.shape}")
+print(f"Prediction range: [{submission['target'].min():.4f}, {submission['target'].max():.4f}]")
+print(f"Prediction mean: {submission['target'].mean():.4f}")
+print(f"Sample predictions:\\n{submission.head(10)}")
+```
+</final_checks>
+
+<output_requirements>
+Return COMPLETE submission generation code that:
+- Uses full training data (no subsampling)
+- Processes test data identically to training
+- Generates predictions for all test samples
+- Saves correctly formatted submission.csv
+</output_requirements>"""
 
 
 @dataclass

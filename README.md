@@ -69,14 +69,18 @@ Set up your environment variables:
 export GOOGLE_API_KEY="your-api-key"
 export GOOGLE_SEARCH_ENGINE_ID="your-search-engine-id"
 
-# For Ollama (default - local models)
-# Make sure Ollama is running: ollama serve
-# Pull the model: ollama pull gemma3:27b
+# For Lemonade/llama.cpp (default - local GGUF models)
+# Start your llama.cpp server with Qwen3 Next 72B
+# Server should be accessible at http://localhost:8080
 
-# For AWS Bedrock (alternative)
+# For Ollama (alternative local option)
+# Make sure Ollama is running: ollama serve
+# Pull the model: ollama pull qwen3:30b
+
+# For AWS Bedrock (cloud alternative)
 export AWS_REGION="us-east-1"
 
-# For OpenAI (alternative)
+# For OpenAI (cloud alternative)
 export OPENAI_API_KEY="your-api-key"
 ```
 
@@ -115,19 +119,23 @@ print(f"Solution:\n{result.final_solution}")
 ### Starting the API Server
 
 ```bash
-# Start the backend API
+# Start the backend API (uses Lemonade/llama.cpp by default)
 python -m uvicorn src.mle_star.api.server:app --host 0.0.0.0 --port 8000
 
 # In another terminal, start the frontend
 cd frontend
 npm install
 npm run dev
+
+# Or use the convenience script (Windows)
+start_agent.bat
 ```
 
 Open http://localhost:3000 to access the web UI. The frontend will:
 - Automatically detect if the backend is available
 - Fall back to demo mode if the backend is not running
 - Show real-time updates via WebSocket when connected
+- Allow model selection (Lemonade, Ollama, Bedrock, OpenAI)
 
 ## 📁 Project Structure
 
@@ -183,8 +191,9 @@ python -m pytest tests/property/ -v
 | `outer_loop_iterations` | 4 | Number of code blocks to refine |
 | `ensemble_iterations` | 5 | Ensemble strategy exploration rounds |
 | `max_debug_retries` | 3 | Max debugging attempts per error |
-| `model_id` | gemma3:27b | LLM model to use |
-| `model_provider` | ollama | Model provider (ollama/bedrock/openai) |
+| `model_id` | qwen3-next-72b | LLM model to use |
+| `model_provider` | lemonade | Model provider (lemonade/ollama/bedrock/openai) |
+| `lemonade_base_url` | http://localhost:8080 | Lemonade/llama.cpp server URL |
 | `ollama_base_url` | http://localhost:11434 | Ollama server URL |
 | `temperature` | 0.7 | LLM temperature |
 | `max_tokens` | 4096 | Max tokens per LLM response |
@@ -219,6 +228,18 @@ python -m pytest tests/property/ -v
 | **Ensemble Planner** | 3 | Proposes ensemble strategies |
 | **Ensembler** | 3 | Implements ensemble strategies |
 | **Submission** | 3 | Generates final submission |
+
+### Agent Prompt Design
+
+All agent prompts are optimized for Qwen3 Next 72B and follow these principles:
+
+- **Structured Output**: XML-style tags ensure reliable parsing
+- **Thinking Sections**: Leverage chain-of-thought reasoning
+- **Explicit Checklists**: Reduce errors with verification steps
+- **Error Handling**: Clear guidance on failure modes
+- **Code Examples**: Templates show expected patterns
+
+See [docs/AGENT_PROMPTS.md](docs/AGENT_PROMPTS.md) for detailed documentation.
 
 ## 📈 Performance
 

@@ -8,6 +8,7 @@ def create_model(config: MLEStarConfig) -> Any:
     """Create an LLM model instance based on configuration.
     
     Supports:
+    - Lemonade (llama.cpp compatible server with GGUF models)
     - Ollama (local models like Gemma 3 27B)
     - AWS Bedrock (Claude, etc.)
     - OpenAI
@@ -18,7 +19,33 @@ def create_model(config: MLEStarConfig) -> Any:
     Returns:
         Model instance compatible with Strands Agent
     """
-    if config.model_provider == "ollama":
+    if config.model_provider == "lemonade":
+        # Lemonade uses llama.cpp server with OpenAI-compatible API
+        try:
+            from strands.models.openai import OpenAIModel
+            return OpenAIModel(
+                model_id=config.model_id,
+                client_args={
+                    "base_url": f"{config.lemonade_base_url}/v1",
+                    "api_key": "not-needed",  # llama.cpp doesn't require API key
+                },
+            )
+        except ImportError:
+            # Fallback: try using litellm or direct OpenAI client
+            try:
+                import openai
+                client = openai.OpenAI(
+                    base_url=f"{config.lemonade_base_url}/v1",
+                    api_key="not-needed",
+                )
+                return client
+            except ImportError:
+                raise ImportError(
+                    "Neither strands.models.openai nor openai package available. "
+                    "Install with: pip install openai"
+                )
+    
+    elif config.model_provider == "ollama":
         try:
             from strands.models.ollama import OllamaModel
             return OllamaModel(
@@ -60,6 +87,7 @@ def get_model_display_name(config: MLEStarConfig) -> str:
         Human-readable model name
     """
     provider_names = {
+        "lemonade": "Lemonade (llama.cpp)",
         "ollama": "Ollama",
         "bedrock": "AWS Bedrock",
         "openai": "OpenAI",

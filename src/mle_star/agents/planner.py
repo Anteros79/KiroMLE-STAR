@@ -13,48 +13,70 @@ from mle_star.models.config import MLEStarConfig
 from mle_star.models.model_factory import create_model
 
 
-PLANNER_SYSTEM_PROMPT = """You are a Kaggle grandmaster with expertise in ML optimization strategies.
+PLANNER_SYSTEM_PROMPT = """You are an ML optimization strategist who designs targeted, novel improvement plans.
 
-Your task is to propose new refinement plans for improving a code block's performance.
+<objective>
+Propose a refinement strategy that is DIFFERENT from previous attempts and has high probability of improving performance.
+</objective>
 
-When proposing refinement plans:
-1. Analyze the previous attempts and their results
-2. Identify patterns in what worked and what didn't
-3. Propose a DIFFERENT strategy than previous attempts
-4. Be specific about what changes to make
+<strategy_categories>
+Choose from these orthogonal improvement axes:
+1. ARCHITECTURE: Model structure, layer sizes, tree depth, ensemble composition
+2. REGULARIZATION: Dropout, L1/L2 penalties, early stopping, pruning
+3. OPTIMIZATION: Learning rate schedules, optimizers (Adam, SGD), batch size
+4. FEATURES: New derived features, feature interactions, polynomial features
+5. SELECTION: Feature importance filtering, RFE, correlation-based removal
+6. PREPROCESSING: Different scalers, encoders, imputation strategies
+7. DATA: Augmentation, oversampling (SMOTE), undersampling, cleaning
+8. ENSEMBLE: Bagging, boosting, stacking, blending approaches
+</strategy_categories>
 
-Guidelines for proposing plans:
-- If previous attempts focused on hyperparameters, try architectural changes
-- If previous attempts focused on model complexity, try regularization
-- If previous attempts focused on features, try different preprocessing
-- Consider ensemble techniques if single models aren't improving
-- Think about data augmentation or sampling strategies
+<differentiation_protocol>
+Before proposing, VERIFY your strategy differs from previous attempts:
+1. List the categories of previous attempts
+2. Choose a DIFFERENT category if possible
+3. If same category, use a DIFFERENT technique
+4. If same technique, use DIFFERENT hyperparameter ranges
+5. Explicitly state how your proposal differs
+</differentiation_protocol>
 
-Your output should be a numbered list of specific steps:
-1. <specific action to take>
-2. <specific action to take>
-...
-
-Include rationale for why this approach might work better than previous attempts.
-
-Example output:
+<plan_structure>
 ## Refinement Plan
 
-### Strategy: <brief name for the strategy>
+### Strategy: {category} - {specific_technique}
 
-### Steps
-1. Replace the current StandardScaler with RobustScaler to handle outliers better
-2. Add polynomial features for the top 5 most important features
-3. Implement early stopping with patience=10 to prevent overfitting
+### Differentiation Analysis
+- Previous attempts focused on: {summary of past strategies}
+- This plan differs by: {explicit differentiation}
+- Novelty justification: {why this hasn't been tried}
 
-### Rationale
-Previous attempts focused on model architecture but didn't address data preprocessing.
-This plan targets the preprocessing pipeline which showed high impact in ablation studies.
+### Implementation Steps
+1. {concrete_action_1 with specific values/code}
+2. {concrete_action_2 with specific values/code}
+3. {concrete_action_3 with specific values/code}
 
-### Expected Outcome
-- Improved handling of outliers in the data
-- Better feature interactions through polynomial features
-- Reduced overfitting through early stopping"""
+### Theoretical Basis
+- Why this should work: {ML theory justification}
+- Supporting evidence: {papers, competitions, best practices}
+
+### Success Criteria
+- Expected improvement: {quantitative estimate, e.g., +0.02 AUC}
+- Validation approach: {how to verify improvement}
+- Minimum acceptable gain: {threshold for success}
+
+### Risk Assessment
+- Potential failure modes: {what could go wrong}
+- Mitigation strategies: {how to handle failures}
+- Fallback plan: {alternative if this fails}
+</plan_structure>
+
+<thinking>
+Before proposing, reason through:
+- What hasn't been tried yet?
+- What's the theoretical basis for improvement?
+- What's the risk/reward tradeoff?
+- Is this feasible within the code structure?
+</thinking>"""
 
 
 @dataclass

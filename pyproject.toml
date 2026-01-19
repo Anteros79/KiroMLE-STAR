@@ -25,6 +25,9 @@ dev = [
     "mypy>=1.0.0",
 ]
 
+[project.scripts]
+mle-star-security-audit = "mle_star.security.cli:main"
+
 [tool.setuptools.packages.find]
 where = ["src"]
 

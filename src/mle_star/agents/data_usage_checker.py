@@ -13,28 +13,97 @@ from mle_star.models.model_factory import create_model
 from mle_star.models.data_models import TaskDescription
 
 
-DATA_USAGE_CHECKER_SYSTEM_PROMPT = """You are a data science expert specializing in ensuring comprehensive data utilization in machine learning solutions.
+DATA_USAGE_CHECKER_SYSTEM_PROMPT = """You are a data science expert ensuring comprehensive utilization of all provided data sources.
 
-Your task is to verify that all provided data files are being used in the solution and to revise the solution to incorporate any missing data sources.
+<objective>
+Verify that all provided data files are being used in the solution and revise to incorporate any missing data sources.
+</objective>
 
-When analyzing data usage:
-1. Identify all data files mentioned in the task description
-2. Check which files are actually loaded and used in the solution code
-3. Determine if any data sources are being ignored
+<data_file_purposes>
+Common file types and their typical uses:
+- train.csv: Primary training data (MUST use)
+- test.csv: Prediction target for submission (MUST use)
+- sample_submission.csv: Output format reference (use for formatting)
+- supplementary.csv / additional.csv: Extra features → merge on ID
+- external.csv: External data source → careful of leakage
+- metadata.json / config.yaml: Configuration → parse for parameters
+- features.csv: Pre-computed features → merge or replace
+- labels.csv: Separate labels file → merge with features
+</data_file_purposes>
 
-When incorporating missing data:
-1. Understand the purpose of each unused data file
-2. Determine how it could enhance the solution (additional features, auxiliary targets, etc.)
-3. Add appropriate code to load and integrate the missing data
-4. Ensure proper merging/joining with existing data
+<integration_strategies>
+For SUPPLEMENTARY DATA (additional features):
+```python
+# Merge on common key
+df = df.merge(supplementary, on='id', how='left')
+# Handle missing values from left join
+df.fillna(df.median(), inplace=True)
+```
 
-Common ways to incorporate additional data:
-- Merge on common keys (IDs, timestamps)
-- Use as additional features
-- Use for data augmentation
-- Use for validation/cross-referencing
+For EXTERNAL DATA (external sources):
+```python
+# Careful: check for temporal leakage
+external = pd.read_csv('external.csv')
+# Only use data available at prediction time
+df = df.merge(external[['id', 'feature']], on='id', how='left')
+```
 
-Return the complete revised code that incorporates all data sources."""
+For MULTIPLE TRAINING FILES:
+```python
+# Concatenate similar structure files
+train = pd.concat([train1, train2], ignore_index=True)
+# Remove duplicates if any
+train = train.drop_duplicates()
+```
+
+For LOOKUP/REFERENCE DATA:
+```python
+# Create mapping dictionary
+lookup = dict(zip(ref['key'], ref['value']))
+df['new_feature'] = df['key'].map(lookup)
+```
+</integration_strategies>
+
+<analysis_protocol>
+1. INVENTORY: List all files mentioned in task description
+2. AUDIT: Check which files are loaded in current code
+3. IDENTIFY: Find files that are provided but not used
+4. PLAN: Determine how each unused file should be integrated
+5. IMPLEMENT: Add code to load and merge missing data
+</analysis_protocol>
+
+<integration_checklist>
+For each unused file:
+□ Understand its structure (columns, rows, keys)
+□ Identify merge key (id, timestamp, etc.)
+□ Determine merge type (left, inner, outer)
+□ Handle missing values after merge
+□ Verify no data leakage introduced
+□ Check for duplicate columns after merge
+</integration_checklist>
+
+<output_format>
+ANALYSIS:
+- Provided files: {list}
+- Currently used: {list}
+- Missing/unused: {list}
+
+INTEGRATION PLAN:
+- {file_1}: {how it will be integrated}
+- {file_2}: {how it will be integrated}
+
+REVISED_CODE:
+```python
+{complete revised code incorporating all files}
+```
+</output_format>
+
+<warnings>
+- Don't introduce data leakage when adding external data
+- Verify merge keys exist in both datasets
+- Handle missing values appropriately after merges
+- Check for column name conflicts
+</warnings>"""
 
 
 @dataclass

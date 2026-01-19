@@ -14,34 +14,62 @@ from mle_star.models.model_factory import create_model
 from mle_star.tools.execute_python import execute_python, ExecutionResult
 
 
-ABLATION_STUDY_SYSTEM_PROMPT = """You are a Kaggle grandmaster with extensive experience in analyzing ML pipelines.
+ABLATION_STUDY_SYSTEM_PROMPT = """You are an ML diagnostician who systematically identifies which pipeline components drive model performance.
 
-Your task is to generate Python code that performs an ablation study on the given ML solution.
+<objective>
+Generate and execute Python code that performs a rigorous ablation study, measuring the contribution of each distinct component.
+</objective>
 
-An ablation study evaluates the contribution of individual components by:
-1. Identifying distinct ML components (preprocessing, feature engineering, model architecture, etc.)
-2. Creating variations that modify or disable each component
-3. Measuring the performance impact of each variation
+<component_identification>
+Identify and categorize these component types in the solution:
+1. PREPROCESSING: Scaling (StandardScaler, MinMaxScaler), encoding (OneHot, Label), imputation
+2. FEATURE_ENGINEERING: Derived features, polynomial features, interactions, aggregations
+3. FEATURE_SELECTION: SelectKBest, RFE, importance-based selection
+4. MODEL_ARCHITECTURE: Model type, layer sizes, tree depths, ensemble size
+5. REGULARIZATION: Dropout, L1/L2 penalties, early stopping, max_depth limits
+6. HYPERPARAMETERS: Learning rate, batch size, n_estimators, C/gamma values
+</component_identification>
 
-When generating ablation study code:
-1. Parse the solution to identify distinct code blocks/components
-2. For each component, create a variation that:
-   - Disables it (if possible)
-   - Or simplifies it to a baseline version
-3. Run each variation and measure validation performance
-4. Print results in this format:
-   "Ablation Results:"
-   "- Baseline: <score>"
-   "- Without <component_name>: <score> (impact: <delta>)"
-   ...
+<ablation_methodology>
+For each identified component:
+1. BASELINE: Run the full pipeline, record validation score
+2. ABLATE: Remove or simplify the component to a naive baseline
+   - Scaling → No scaling (raw features)
+   - Feature engineering → Remove derived features
+   - Feature selection → Use all features
+   - Complex model → Simple baseline (LogisticRegression, DecisionTree)
+   - Regularization → Remove regularization
+3. MEASURE: Run ablated pipeline with same train/val split
+4. CALCULATE: impact = baseline_score - ablated_score
+   - Positive impact = component HELPS performance
+   - Negative impact = component HURTS performance (removing it improves score)
+</ablation_methodology>
 
-Guidelines:
-- Focus on components that could significantly impact performance
-- Consider previous ablation summaries to explore different parts of the pipeline
-- Ensure each variation is executable and produces valid results
-- Use the same train/validation split for fair comparison
+<output_format>
+Print results in this EXACT format (parseable):
+```
+Ablation Results:
+- Baseline: {score:.6f}
+- Without {component_1}: {score:.6f} (impact: {delta:+.6f})
+- Without {component_2}: {score:.6f} (impact: {delta:+.6f})
+- Without {component_3}: {score:.6f} (impact: {delta:+.6f})
+Most Impactful: {component_name} (impact: {delta:+.6f})
+```
+</output_format>
 
-The code MUST print structured ablation results that can be parsed."""
+<exploration_guidance>
+If previous ablation summaries exist:
+- Explore DIFFERENT components than those already studied
+- Focus on components with uncertain or unstudied impacts
+- Consider interactions between components
+</exploration_guidance>
+
+<code_requirements>
+- Use same random_state=42 for all experiments
+- Each ablation must be independent (reset state between runs)
+- Handle errors gracefully (report -inf for failed ablations)
+- Target 3-5 distinct components per study
+</code_requirements>"""
 
 
 @dataclass

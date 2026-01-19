@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Settings, Cpu, Zap, RefreshCw, ChevronDown, Server, Cloud, Sparkles } from 'lucide-react';
+import { Settings, Cpu, Zap, RefreshCw, ChevronDown, Server, Cloud, Sparkles, Citrus } from 'lucide-react';
 import { MLEStarConfig, DEFAULT_CONFIG, ModelProvider } from '@/types';
 
 interface ConfigPanelProps {
@@ -10,11 +10,18 @@ interface ConfigPanelProps {
   disabled?: boolean;
 }
 
-const MODEL_PRESETS = {
+const MODEL_PRESETS: Record<ModelProvider, Array<{id: string; name: string; desc: string}>> = {
+  lemonade: [
+    { id: 'qwen3-next-72b', name: 'Qwen3 Next 72B', desc: 'Local • Recommended' },
+    { id: 'qwen3-32b', name: 'Qwen3 32B', desc: 'Local • Fast' },
+    { id: 'llama-3.3-70b', name: 'Llama 3.3 70B', desc: 'Local • Alternative' },
+  ],
   ollama: [
+    { id: 'qwen3:30b', name: 'Qwen3 30B', desc: 'Local • Recommended' },
+    { id: 'qwen3:14b', name: 'Qwen3 14B', desc: 'Local • Fast' },
+    { id: 'qwen3:70b', name: 'Qwen3 70B', desc: 'Local • Best Quality' },
     { id: 'gemma3:27b', name: 'Gemma 3 27B', desc: 'Local • High Quality' },
-    { id: 'llama3.3:70b', name: 'Llama 3.3 70B', desc: 'Local • Best Quality' },
-    { id: 'qwen2.5:32b', name: 'Qwen 2.5 32B', desc: 'Local • Fast' },
+    { id: 'llama3.3:70b', name: 'Llama 3.3 70B', desc: 'Local • Alternative' },
     { id: 'deepseek-r1:32b', name: 'DeepSeek R1 32B', desc: 'Local • Reasoning' },
   ],
   bedrock: [
@@ -39,6 +46,7 @@ export default function ConfigPanel({ config, onChange, disabled }: ConfigPanelP
   };
 
   const providerIcons: Record<ModelProvider, React.ReactNode> = {
+    lemonade: <Citrus className="w-4 h-4" />,
     ollama: <Server className="w-4 h-4" />,
     bedrock: <Cloud className="w-4 h-4" />,
     openai: <Sparkles className="w-4 h-4" />,
@@ -73,8 +81,8 @@ export default function ConfigPanel({ config, onChange, disabled }: ConfigPanelP
         {/* Model Provider Selection */}
         <div className="space-y-3">
           <label className="text-sm font-medium text-slate-700">Model Provider</label>
-          <div className="grid grid-cols-3 gap-2">
-            {(['ollama', 'bedrock', 'openai'] as ModelProvider[]).map((provider) => (
+          <div className="grid grid-cols-4 gap-2">
+            {(['lemonade', 'ollama', 'bedrock', 'openai'] as ModelProvider[]).map((provider) => (
               <button
                 key={provider}
                 onClick={() => {
@@ -85,7 +93,7 @@ export default function ConfigPanel({ config, onChange, disabled }: ConfigPanelP
                   }
                 }}
                 disabled={disabled}
-                className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 transition-all ${
+                className={`flex items-center justify-center gap-2 px-3 py-3 rounded-xl border-2 transition-all ${
                   config.model_provider === provider
                     ? 'border-indigo-500 bg-indigo-50 text-indigo-700 shadow-sm'
                     : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'
@@ -157,6 +165,21 @@ export default function ConfigPanel({ config, onChange, disabled }: ConfigPanelP
               value={config.ollama_base_url}
               onChange={(e) => updateConfig('ollama_base_url', e.target.value)}
               disabled={disabled}
+              className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all disabled:opacity-40"
+            />
+          </div>
+        )}
+
+        {/* Lemonade URL (only show for Lemonade) */}
+        {config.model_provider === 'lemonade' && (
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-700">Lemonade Server URL (llama.cpp)</label>
+            <input
+              type="text"
+              value={config.lemonade_base_url}
+              onChange={(e) => updateConfig('lemonade_base_url', e.target.value)}
+              disabled={disabled}
+              placeholder="http://localhost:8080"
               className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all disabled:opacity-40"
             />
           </div>

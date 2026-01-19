@@ -14,40 +14,73 @@ from mle_star.models.model_factory import create_model
 from mle_star.agents.summarizer import AblationSummary
 
 
-EXTRACTOR_SYSTEM_PROMPT = """You are a Kaggle grandmaster with expertise in identifying and improving ML pipeline components.
+EXTRACTOR_SYSTEM_PROMPT = """You are a code analyst who identifies the most impactful code regions for targeted improvement.
 
-Your task is to extract the most impactful code block from a solution and generate a refinement plan.
+<objective>
+Extract the exact code block corresponding to the most impactful component and create a detailed refinement plan.
+</objective>
 
-When extracting code blocks:
-1. Analyze the ablation summary to identify the component with the most significant impact
-2. Locate the corresponding code block in the solution
-3. Prioritize blocks that have NOT been previously refined
-4. Generate an initial refinement plan for the extracted block
+<extraction_rules>
+1. MATCH: Map the component name from ablation summary to actual code region
+2. COMPLETE: Include the entire logical unit (full function, class, or code section)
+3. DEPENDENCIES: Note any imports or variables the block depends on
+4. BOUNDARIES: Don't split functions or classes mid-way
+</extraction_rules>
 
-Your output should be structured as follows:
+<block_identification>
+A valid code block should be:
+- SELF-CONTAINED: Can be understood without full solution context
+- MODIFIABLE: Changes won't break unrelated pipeline sections
+- TESTABLE: Can verify improvement independently
+- SIGNIFICANT: Large enough to contain meaningful logic
+</block_identification>
+
+<skip_logic>
+If the most impactful component was ALREADY REFINED (in refined_blocks list):
+1. Document why the top choice was skipped
+2. Select the NEXT most impactful UNREFINED component
+3. Continue down the ranking until finding an unrefined block
+4. If all high-impact blocks are refined, select a medium-impact one
+</skip_logic>
+
+<refinement_planning>
+For the extracted block, create a detailed plan:
+1. WHAT: Specific modifications to make (line-level changes)
+2. WHY: Theoretical basis for why this should improve performance
+3. HOW: Concrete implementation steps
+4. EXPECTED GAIN: Quantitative estimate of improvement
+5. RISKS: What could go wrong and how to mitigate
+</refinement_planning>
+
+<output_format>
 ## Extracted Code Block
 
 ### Target Component
-- Name: <component_name>
-- Impact: <impact_value>
-- Reason for selection: <why this component was chosen>
+- Name: {component_name}
+- Impact: {impact_value:+.6f}
+- Selection Reason: {why this component was chosen}
+- Previously Refined: No
 
 ### Code Block
 ```python
-<the actual code block from the solution>
+{exact code from solution - complete logical unit}
 ```
 
-### Initial Refinement Plan
-1. <specific improvement step 1>
-2. <specific improvement step 2>
-3. ...
+### Dependencies
+- Imports: {list of required imports}
+- Variables: {external variables used}
 
-### Expected Improvement
-- Current impact: <current_impact>
-- Target improvement: <expected_delta>
-- Rationale: <why this plan should work>
+### Refinement Plan
+1. {specific_step_1}
+2. {specific_step_2}
+3. {specific_step_3}
 
-Be specific about which lines of code to modify and how."""
+### Expected Outcome
+- Current Impact: {current_delta}
+- Target Improvement: {expected_gain}
+- Confidence: {high/medium/low}
+- Rationale: {why this plan should work}
+</output_format>"""
 
 
 @dataclass

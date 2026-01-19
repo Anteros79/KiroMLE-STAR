@@ -15,8 +15,9 @@ class MLEStarConfig:
         ensemble_iterations: Number of ensemble strategy exploration rounds (default: 5)
         max_debug_retries: Maximum number of debugging attempts before giving up (default: 3)
         model_id: The LLM model identifier to use for agents
-        model_provider: The model provider (ollama, bedrock, openai)
+        model_provider: The model provider (ollama, bedrock, openai, lemonade)
         ollama_base_url: Base URL for Ollama API (default: http://localhost:11434)
+        lemonade_base_url: Base URL for Lemonade/llama.cpp server (default: http://localhost:8080)
         temperature: Temperature parameter for LLM generation
         max_tokens: Maximum tokens for LLM responses
     """
@@ -29,9 +30,10 @@ class MLEStarConfig:
     max_debug_retries: int = 3
     
     # LLM parameters
-    model_id: str = "gemma3:27b"
-    model_provider: Literal["ollama", "bedrock", "openai"] = "ollama"
+    model_id: str = "qwen3-next-72b"
+    model_provider: Literal["ollama", "bedrock", "openai", "lemonade"] = "lemonade"
     ollama_base_url: str = "http://localhost:11434"
+    lemonade_base_url: str = "http://localhost:8080"
     temperature: float = 0.7
     max_tokens: int = 4096
     
@@ -59,9 +61,10 @@ class MLEStarConfig:
             outer_loop_iterations=data.get("outer_loop_iterations", 4),
             ensemble_iterations=data.get("ensemble_iterations", 5),
             max_debug_retries=data.get("max_debug_retries", 3),
-            model_id=data.get("model_id", "gemma3:27b"),
-            model_provider=data.get("model_provider", "ollama"),
+            model_id=data.get("model_id", "qwen3-next-72b"),
+            model_provider=data.get("model_provider", "lemonade"),
             ollama_base_url=data.get("ollama_base_url", "http://localhost:11434"),
+            lemonade_base_url=data.get("lemonade_base_url", "http://localhost:8080"),
             temperature=data.get("temperature", 0.7),
             max_tokens=data.get("max_tokens", 4096),
         )
